@@ -6,12 +6,12 @@ author:
 - ^1^Western University, ^2^University of Western Ontario
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  bookdown::word_document2:
+  word_document:
     fig_caption: yes
     md_extensions: +footnotes
     reference_docx: custom_reference.docx
     toc: yes
-  word_document:
+  bookdown::word_document2:
     fig_caption: yes
     md_extensions: +footnotes
     reference_docx: custom_reference.docx
