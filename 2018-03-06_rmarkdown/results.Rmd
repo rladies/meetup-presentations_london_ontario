@@ -1,0 +1,141 @@
+---
+title: "results"
+author: "Thea Knowles"
+date: '2018-02-18'
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup_results, include=FALSE}
+# Important: If this is a child doc, you can't have duplicate chunk names
+#    e.g., setup exists in the parent .Rmd, so I've changed this chunk name to setup_results
+# An exception is unnamed chunks, which get automatically renamed when you knit.
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r source, include=FALSE}
+source("helper.R")
+```
+
+## This is the results section
+This section reads in the contents of helper.R. You can embed figures and tables directly in this section, or you can save them to another location. Every journal has slightly different requirements, so you may have to tweak your workflow depending on where you're submitting.
+
+### Embedding a figure
+
+We can embed figures just like we did in the summary document, by using R code chunks. We can also include extra information to include captions and to be able to cross reference them. 
+
+**Caution**: cross-referencing tables and figures is fairly straightfoward in RMarkdown when you're knitting to PDF and HTML outputs, but it's a lot more obnoxious in Word. To do that, we'll have to use a specialized output and another knitr package ([bookdown](https://bookdown.org/yihui/bookdown/a-single-document.html)). We'll visit that in a moment. 
+
+First, we'll just embed a plot. This is how you'll reference it, but it won't turn out nice in regular word output just yet. 
+
+See Figure \@ref(fig:calsugsPlot) below.
+
+```{r calsugsPlot, fig.cap = "Calories by sugars", echo = FALSE, fig.align='center'}
+calsugs_plot+
+     theme_bw()+
+     xlab("Sugars (g)")
+```
+
+
+## Cross referencing figures and tables
+
+You can cross-reference figures and tables. This is a bit more complicated, but the benefit is that you don't have to remember which figure/table was in which position (especially helpful if you are adding/removing figs/tables during editing phase). You simply refer to the figure by its chunk label. 
+
+Figure \@ref(fig:figlabel) is shown here. 
+
+```{r figlabel, echo=FALSE, fig.cap="A nice figure caption", fig.height=12, fig.width=10}
+calbevs_plot
+```
+
+
+See Table \@ref(tab:calsugs_tab).
+
+```{r calsugs_tab, results='asis', echo = FALSE}
+knitr::kable((calsugs), booktabs=T, caption="Calories and sugars for each beverage.")
+```
+
+
+
+<!-- Figure \@ref(fig:figlabel) is shown here.  -->
+
+
+
+We can also just redo the plot
+```{r fatPlot, echo=FALSE}
+ggplot(data = starbucks, aes(x = total_fat, y = Calories, color=kind)) + 
+     geom_point()+
+     geom_smooth(method="lm")+
+     facet_wrap(~size)+
+     theme_bw()
+```
+
+
+### Using inline R code to refer to values in tables
+Here I will include a little extra embedded R code to clean up our model results, but I won't include this code to be shown. In the next paragraph, I'll refer directly to the contents of my model output using in-line R code. For this, we don't use embedded chunks, but rather the syntax  \`\ r someCodeHere \`. See the next paragraph in the results.Rmd file for an example.
+
+
+```{r, include = FALSE}
+# This code won't be included in the output.
+mod1_summary <- summary(mod1)
+mod1_coeffs <- mod1_summary$coefficients
+# You can refer to the contents of mod1_coefficients by referencing the index of the cell you want to use. This is in the form mod1_coefs["row", "column"]. See the paragraph below.
+
+# These will both refer to the same cell
+mod1_coeffs["sugars", "Estimate"]
+mod1_coeffs[2,1]
+```
+
+
+Sugars demonstrated a significant main effect on the calorie content of starbucks beverages 
+(estimate = `r round(mod1_coeffs["sugars", "Estimate"],3)`, 
+$t$ = `r round(mod1_coeffs["sugars", "t value"],3)`, 
+$p$ = `r round(mod1_summary$coefficients["sugars", "Pr(>|t|)"],3)`).
+
+<!-- Note: the inline R code to include the model coefficients is a little wordy. While it comes out cleanly in the output, when you're working in the .Rmd file, you can separate the code on separate lines. These won't appear as line breaks in the output; for that, you would have to enter a blank line in between. -->
+
+Notice that our small $p-value$ shows up as 0, when it really should show up as <0.001. I'm going to include another chunk that cleans up the p-value column. Caution: This code is pretty wordy.  
+
+```{r, include = FALSE}
+# First, round all numbers to 3 digits
+mod1_coeffs[,c(1:4)] <- round(mod1_coeffs[,c(1:4)],3)
+
+# Then, convert contents to characters, and replace anything in column 4 (p-vals) that is less than 0.001 with "<0.001"
+mod1_coeffs[,4] <- as.character(lapply(mod1_coeffs[,4], function(x){return(ifelse(x<0.001, "<0.001", as.character(round(x,3))))}))
+
+```
+
+Now I'll refer to the same p-value as before, using almost the same inline R code as I did previously. One main difference now, though, is that we've converted the contents of the table to character variables (i.e., they're no longer numeric). We did our rounding in the code above, so I no longer have to round in the inline code. 
+
+As previously stated, sugars demonstrated a significant main effect on the calorie content of starbucks beverages 
+(estimate = `r mod1_coeffs["sugars", "Estimate"]`, 
+$t$ = `r mod1_coeffs["sugars", "t value"]`, 
+$p$ = `r mod1_coeffs["sugars", "Pr(>|t|)"]`).
+
+
+### Printing a table
+Here I will reference a table. 
+
+```{r mod1Coefs, echo=FALSE}
+knitr::kable((mod1_coeffs), caption = "This is the caption for my model coefficients table.")
+```
+
+
+Other stuff
+- How do we change the row names?
+- if p < 0.001, can we write it out that way?
+
+
+
+
+## You can save plots
+Some journals require that you upload figures and tables separately. In this case, it may not make sense to have them print to the document output. The following code will allow you to save an image (default is the working directory) but it won't be included in the document.
+
+```{r saveFig, echo=TRUE}
+jpeg("images/pressure.jpg")
+plot(pressure)
+dev.off()
+```
+
+You could, for example, make a subdirectory called "`figures`", and include that in the path. 

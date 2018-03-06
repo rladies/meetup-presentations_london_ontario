@@ -1,0 +1,110 @@
+---
+title: "Starbucks data: Preliminary Results"
+author: "Thea Knowles"
+date: '2018-03-06'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadLibraries, include=FALSE}
+# You don't have to include libraries you loaded in helper.R
+# But you can if you want
+# You may wish to load additional libraries as well
+
+library(kableExtra)
+```
+
+```{r source, include=FALSE}
+source('helper.R')
+```
+
+This is a summary report of the Starbucks drink menu data. This text will appear in the main output. 
+
+<!-- This is an example of a comment I've written to myself that won't appear on the output -->
+<!-- You can make a line a comment by selecting it and then typing shift + command + c -->
+<!-- Alternatively, you can click Code >> Comment/Uncomment -->
+
+
+Whenever we want to use r code, we embed it in chunks.
+
+- Chunks can be inserted by typing alt + command + i
+- Anything within a chunk will be treated like R code. 
+- In chunks, you can either call variables that you assigned from within your helper script, or you can create new variables to include here. 
+
+
+### Research question: 
+- In Starbucks beverages, what is the relationship between the amount of sugars and calories?
+
+### Means
+- This is an example where we call in a variable we already created (calsugs, which is a data.frame)
+- Note: what does `echo = FALSE` mean?
+
+```{r means, echo=FALSE}
+calsugs
+```
+
+#### Better looking means
+- Be careful not to have two chunks with identical names!
+
+```{r means_nice, echo=FALSE}
+library(kableExtra)
+knitr::kable(calsugs)
+
+# You can include comments in chunks too, but you use the comment syntax that you normally would with r (#)
+
+# If kableExtra() doesn't work for you, try using kable() instead
+# kable() no longer functions with the most recent version of R
+```
+
+
+### A preliminary plot!
+- You can also leave a chunk unnamed and without any parameters specified
+- This is a plot that we made in helper.R
+
+```{r}
+calsugs_plot
+```
+
+### Another plot!
+- Here we call in the same plot, but add some more details
+
+```{r}
+calsugs_plot+
+     facet_wrap(~Beverage_category)
+```
+
+### OMG ANOTHER plot!
+- Here we are making a plot from scratch 
+     - i.e., we're not calling a plot that has already been assigned to a variable in helper.R
+- We don't need to assign it to a variable name (<-); we can just include the code for the plot
+
+**Calories by beverage type:**
+
+```{r}
+ggplot(data=starbucks, aes(x=Beverage_category, y=Calories, fill=Beverage_category))+
+     geom_boxplot()
+```
+
+
+## Exercise 3: Knit!
+- Press Knit button at top of RStudio editor
+- Output will default to whatever is first specified in the YAML
+     - In this case: HTML
+- You can also specify other types of output and select which one you would like to knit
+
+## Exercise 4: Include a new plot!
+- Insert a chunk and make a new plot
+- Use the same syntax that we used to make the "Calories by beverage type" but plot "Sugars by beverage type" instead
+
+
+*Insert new chunk here!*
+
+
+## Exercise 5: Make a new summary .Rmd report
+- See slides
+
+
+
