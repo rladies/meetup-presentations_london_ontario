@@ -133,9 +133,9 @@ Other stuff
 Some journals require that you upload figures and tables separately. In this case, it may not make sense to have them print to the document output. The following code will allow you to save an image (default is the working directory) but it won't be included in the document.
 
 ```{r saveFig, echo=TRUE}
-jpeg("images/pressure.jpg")
-plot(pressure)
-dev.off()
+#jpeg("images/calbevs_plot.jpg")
+#calbevs_plot
+#dev.off()
 ```
 
 You could, for example, make a subdirectory called "`figures`", and include that in the path. 
