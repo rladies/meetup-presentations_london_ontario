@@ -1,0 +1,618 @@
+---
+title: "Writing reports and manuscripts in R Markdown"
+author:
+- Thea Knowles, R-Ladies \#LdnOnt
+date: "March 6, 2018"
+output: 
+  ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(emo)
+```
+
+# Writing reports and manuscripts in R Markdown
+
+## Agenda
+- Make an RProject where we will store all of our files for today
+- Quick refresher of R and R Markdown basics
+- Navigate a workflow to:
+     - Load in our data to a plain .R script
+     - Write an informal summary report in R Markdown
+     - Write a manuscript draft in R Markdown
+
+## Why R Markdown?
+- Easy to integrate data directly into other documents
+- No copy/paste -> less margin for error
+- Much simpler to learn compared to other tools/languages, like LaTex
+- Reference management integration: easy to cite relevant papers and autogenerate bibliographies
+
+## Knitting
+<div class="columns-2">
+<img src="images/knitr.png" height=300/>
+<!-- ![](images/knitr.png) -->
+
+When you run R Markdown, you are **knitting** together plain Markdown text and R code.
+</div>
+
+# Getting set up
+
+## Installation
+
+### Have installed the following software
+Required:
+
+- [R](https://cran.r-project.org/)
+- [RStudio](rstudio.com)
+
+## Installation
+Other software to be aware of:
+
+- [Pandoc](https://pandoc.org/installing.html)
+     - If you have RStudio installed, Pandoc is automatically installed too
+     - Pandoc does the converting from .Rmd to .md, .docx, .pdf, .html, etc.
+     - It's working hard behind the scenes, but we don't interact with it too much
+- [Latex](https://www.latex-project.org/get/) 
+     - Necessary to install if you want to output PDFs
+     - We won't do this today
+
+
+# RProjects
+
+## EXERCISE 1 | Make a new R Project for this workshop
+
+![](images/new_project.png)
+
+- Make a new directory for this workshop
+- Put the workshop contents in the same directory
+
+
+## Install the following packages
+Copy and paste this code into your R console and run it
+
+- `install.packages(c("rmarkdown","knitr","bookdown"))`
+- You can also do this manually in the Packages pane
+
+![](images/packages_pane.png)
+
+## Create a new R Markdown file
+
+![](images/new_rmarkdown1.png)
+
+## EXCERCISE 1 | Recap
+1. Make new R Project
+2.  `install.packages(c("rmarkdown","knitr","bookdown"))`
+3. Creat new R Markdown document
+
+## Essential parts of any R Markdown document
+![](images/rmarkdown_parts.png)
+
+## YAML
+[YAML](https://en.wikipedia.org/wiki/YAML) (rhymes with camel): The header that tells R Markdown how to generate your document. Indentation and spacing are very important.
+
+- Permits the following to happen when you knit: 
+     - .Rmd -> knitr -> .md -> Pandoc -> output
+     - Output can be .docx, .html, .pdf, and many others
+- YAML: "YAML Ain't Markup Language"
+
+**Basic: **
+
+```
+title: "Untitled"
+author: "Thea Knowles"
+date: '2018-02-18'
+output: word_document
+```
+
+## YAML
+
+**Gettin' fancy**
+
+```
+title: "A very important title"
+subtitle: "A less important subtitle"
+author:
+     name: Thea Knowles
+     affiliation: Western University
+     name: Scott Adams
+     affiliation: Western University
+     affiliation: University Hospital
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+```
+
+## YAML
+<div class="columns-2">
+**Even fancier:**
+
+- output extensions
+- template
+- bibliography file
+- csl (references style guide)
+- css (supreme customization!)
+
+**Different options for:**
+
+- [HTML output](https://rmarkdown.rstudio.com/html_document_format.html)
+- [Word output](https://rmarkdown.rstudio.com/word_document_format.html)
+- [PDF output](https://rmarkdown.rstudio.com/pdf_document_format.html)
+</div>
+
+## Essential parts of any R Markdown document
+![](images/rmarkdown_parts.png)
+
+## Set chunk options
+- [*Chunks*](http://yihui.name/knitr/options/) are sections that will include R code. By setting defaults at the beginning of your document, you can specify what you want most of your chunks to do.
+- In each chunk, you can specify options in the form `tag=value` in the chunk header.
+     - For example, in the following, the tag `include` is set to `FALSE`, indicating that we don't want the contents of this chunk included in the output
+
+This is the default chunk options set when you create a new .RMD (R Markdown) file.
+
+````
+```{r setup, include=FALSE}`r ''`
+knitr::opts_chunk$set(echo = TRUE)
+```
+````
+
+## Set chunk options
+
+````
+```{r setup, include=FALSE}`r ''`
+knitr::opts_chunk$set(echo = TRUE)
+```
+````
+
+This chunk provides the following information for "knitting" the document:
+
+- `setup`: the name of the chunk You shouldn't have two chunks with the same name, unless they are unnamed (in which case they just get numbered automatically during the knit process)
+- `include = false`: the chunk will not be included in the output after knitting.
+- `knitr::opts_chunk$set(echo = TRUE)`: the default behavior for chunks is to "echo;" you will see the actual code printed in the final output. You can set this to false if you don't want the actual code included by default.
+
+## Set chunk options
+- You don't have to change this unless you want to
+- You can assign different values on a chunk-by-chunk basis
+- More on this in a minute!
+
+
+## Essential parts of any R Markdown document
+![](images/rmarkdown_parts.png)
+
+## Text in R Markdown | The briefest intro to Markdown syntax
+
+- [R Markdown Cheat Sheet](https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf)
+- [R Markdown Reference Guide](https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf)
+
+<img src="images/markdown_reminder_code_output.png" width=600/>
+
+
+## Essential parts of any R Markdown document
+![](images/rmarkdown_parts.png)
+
+## R code chunks
+
+![](images/mychunk.png)
+
+- Insert chunks: cmd + k or click `Code >> Insert chunk`
+- name your chunk (`myChunk`)
+- specify options (`echo=TRUE`)
+
+Some other options
+
+- `echo = FALSE`: don't show the code itself in the final document
+- `include = FALSE`: don't include this code or its output in the final document
+- `eval = FALSE`: don't actually run this code at all
+- [And more...](https://yihui.name/knitr/options/)
+
+
+
+# Before we begin
+
+## Recipe for R Markdown summary document | My suggestion
+
+|         Ingredient        |          In this example         |
+|:-------------------------:|:--------------------------------:|
+|            data           | starbucks_drinkMenu_expanded.csv |
+|       helper script       | helper.R                         |
+| R Markdown summary document | preliminary_results_summary.Rmd|
+
+## 1. Data
+`starbucks_drinkMenu_expanded.csv`
+
+- We will use the same data Pierina used in her October Intro to R workshop (from kaggle.com)
+     - Redundancy = good!
+     - Thea = lazy
+- [Check out Pierina's materials for a refresher](https://www.meetup.com/rladies-ldnont/messages/boards/thread/51164998)
+
+## 2. Helper script
+`helper.R`
+
+- Use a helper .R script to do your data cleaning and basic analyses
+- Straight up R code. No markdown.
+- You can pull this .R document into future .RMD documents using `source()`
+- The benefit of using a helper script is that you can keep your analyses consistant. Whether you're writing an informal summary report to share with your supervisor or a full manuscript, you don't have to copy and paste the analyses each time you do something new. 
+
+## 3. R Markdown document
+- `preliminary_results_summary.Rmd`
+
+### R Markdown documents...
+- End in extension `.Rmd`
+- Incorporate both R code (in chunks) and plain text (in Markdown)
+- Require YAML at the beginning
+
+# Let's get started!
+
+# 1. Make a new R Project for this workshop | DONE!
+
+# 2. Write helper .R script
+
+## 2. Write helper .R script
+
+### Create a helper script as you would a regular R script
+- Open your new RProj file, which will start a new RStudio Session
+- Create and save a new R script entitled (for example) helper.R
+- Include the code you'd use to load in your data, tidy it up, analyze it, and visualize it
+     - You can edit more of this code when you're writing your reports, too
+
+**For now:** Just open helper.R
+- Let's review it briefly `r emo::ji("books")`
+
+## EXERCISE 2 | Run helper.R
+- Open helper.R
+- Select all text and type `command + R` OR click Run (top right of script pane)
+- You can also run each line one at a time by clicking `command + R`
+
+
+*Got an error?*
+
+- You may need to install packages first (see the comments in helper.R)
+     
+
+## Need a refresher on other skills in R? | Check out our past R-Ladies' presentations!
+
+- Need a refresher on... 
+     - Scripting? Check out [Rachael's materials!](https://www.meetup.com/rladies-ldnont/messages/boards/thread/51239206)
+     - Loading in your data? Check out [Pierina's intros](https://www.meetup.com/rladies-ldnont/messages/boards/thread/51164998)
+     - Data visualization? See...
+          - [Sinthiya's data visualization materials](https://www.meetup.com/rladies-ldnont/messages/boards/thread/50724440)
+          - [Olivia's materials on 2d and 3d graphics](https://www.meetup.com/rladies-ldnont/messages/boards/thread/50864967)
+     - Analyses? See...
+          - [Monica's data manip & multivariate analyses](https://www.meetup.com/rladies-ldnont/messages/boards/thread/50910795)
+          - [Daryn's SPSS to R stats code](https://drive.google.com/drive/folders/0BznwYF956_rDRUtoS3N4dldySmc?usp=sharing)
+          - [Jaky's regression materials](https://www.meetup.com/rladies-ldnont/messages/boards/thread/51292341)
+
+
+# 3. Writing a summary report
+
+### Got my data in! `r emo::ji("dancer")`
+### Gotta tell all my friends! `r emo::ji("party_popper")`
+
+*i.e., gotta report it to my supervisor*
+
+## 3. Writing a summary report
+
+### **From scratch: **
+Make a new R Markdown document and store it in the same directory as your helper.R script
+
+### **For now:** 
+Just open `preliminary_results_summary.Rmd`
+
+- Let's review it briefly `r emo::ji("books")`
+
+## 3. Writing a summary report
+### Notice our YAML and chunk options!
+- These are the defaults that are included when you generate a new .Rmd file (I haven't changed them)
+- We'll leave the defaults in the YAML and chunk setup for now, as formatting details aren't as important for a summary report.
+- We're using HTML output for now. We'll do Word .docx output for the manuscript.
+
+
+## EXERCISE 3 | Knit your summary .Rmd report!
+- Press Knit button at top of RStudio editor
+- Output will default to whatever is first specified in the YAML
+     - In this case: HTML
+- You can also specify other types of output and select which one you would like to knit
+
+<center>
+![](images/knit.png)
+</center>
+
+## EXERCISE 4 | Include another figure in your report
+- If there's time...
+- See `preliminary_results_summary.Rmd`
+
+
+## EXERCISE 5 | Create a new summary R Markdown report
+
+Sometimes you may have to write multiple reports
+
+<div class="columns-2">
+<img src="images/new_rmarkdown1.png" height=50/>
+
+<img src="images/new_rmarkdown2.png" height="250"/>
+
+- Name it something new and relevant
+- Save it in the same directory as helper.R
+- Delete everything after the first chunk.
+- Source to the same helper.R
+- Write some text and include a figure or table
+</div>
+
+
+
+# 4. Writing a manuscript
+
+----
+
+### Recap of recipe for a summary report:
+|         Ingredient        |          In this example         |
+|:-------------------------:|:--------------------------------:|
+|            data           | starbucks_drinkMenu_expanded.csv |
+|       helper script       | helper.R                         |
+| R Markdown summary document | preliminary_results_summary.Rmd|
+
+
+----
+
+### Recipe for R Markdown .docx manuscript
+
+|         Ingredient        |          In this example         |
+|:-------------------------:|:--------------------------------:|
+|            *data*           | *starbucks_drinkMenu_expanded.csv* |
+|       *helper script*       | *helper.R*                         |
+| R Markdown document(s)    | manuscript.Rmd, results.Rmd      |
+| **style reference .docx file** (specify styles in your Word doc)| custom_reference.docx            |
+| **references in .bib format** | starbucks_refs.bib           |
+| **style bibliography (csl) file** (how your bibliography will be formatted) | apa.csl |
+
+## Recipe for R Markdown manuscript: Caveat!
+- This is one (my) way of doing it
+- There are many other ways!
+- Many components are optional, for example: 
+     - style reference .docx file
+     - results.Rmd
+- See resources at end of this presentation for inspiration!
+
+## Recipe for R Markdown manuscript: Caveat!
+- While you *can* be really specific in your formatting, we won't get into a *ton* of detail here.
+- Since many journals often do a lot of the formatting from their end, what authors actually need to submit may be fairly bare-bones (sometimes)
+- If you're submitting a .docx file for publication, you can also make your final tweaks in the actual Word document itself, rather than in R Markdown
+     - Save this until the end, because whatever you do in the Word document itself will be rewritten when you knit in R Markdown.
+
+## R Markdown document*S* ?
+**manuscript.Rmd**
+
+- The main text (intro, methods, discussion, references, etc... Everything but results!)
+
+**results.Rmd**
+
+- Write your results in a separate .Rmd file, and knit it in as a [child document](https://yihui.name/knitr/demo/child/)
+
+**Benefits:**
+
+- Cleaner!
+- Makes it easier to organize your writing
+
+## manuscript.Rmd
+We will start with the main body file
+
+- Open manuscript.Rmd
+- Knit it!
+- Examine it `r emo::ji("magnifying_glass_tilted_left")`
+
+
+## Manuscript: YAML
+We can make use of many more options!
+
+<center>
+![](images/manuscript_yaml.png)
+</center>
+
+
+## Manuscript: YAML
+Let's focus on the word_document output for now
+
+- See more options in [RStudio's R Markdown overview](https://rmarkdown.rstudio.com/word_document_format.html)
+
+<center>
+<img src="images/manuscript_yaml_word_output.png" height="400"/>
+</center>
+
+## custom_reference.docx
+- Allows you to set the styles for your .docx output in Microsoft Word directly
+- Contents of the .docx file are IGNORED
+- Styles and properties (margins, headers text, etc) are used in .Rmd's .docx output
+- For easiest use, include the custom_reference.docx in the same directory as the rest of your RProject
+
+## EXERCISE 6 | Modify styles in custom_reference.docx
+
+- Make Header 1 size 16 font
+- Make Header 2 *italicized*
+- Add page numbers
+- Knit manuscript.Rmd again and see what changed.
+
+## Manuscript: YAML | Markdown extensions
+
+`md_extensions: +footnotes`
+
+- See the [Pandoc manual](http://pandoc.org/MANUAL.html#extensions) to learn more.
+- So far: I've just use it for footnotes! `r emo::ji("footprints")`
+
+
+## Bibliography info
+<center>
+<img src="images/manuscript_yaml_bib_info.png" height="400"/>
+</center>
+
+## Bibliography info: starbucks_refs.bib
+
+References in BibLaTex (.bib) format: `starbucks_refs.bib`
+
+- Use .bib format
+     - [About bibtex](http://www.bibtex.org/Using/)
+- Use another reference manager? No problem! Most can easily convert to .bib
+     - [Converting from Mendeley to .bib](https://blog.mendeley.com/2012/03/24/how-to-series-generate-bibtex-files-for-your-collections-for-use-in-latex-part-3-of-12/)
+- Use *keys* to cite a work in the markdown text, which will look like this in your markdown text:
+
+     > *"It is well known that some things are facts, and others are not [@knowles2018]."*
+     
+     
+## Bibliography info: starbucks_refs.bib
+
+- A very useful RStudio Add-in that allows you to cite your sources from a drop-down menu: [citr](https://github.com/crsh/citr)
+
+![](images/citr.png)
+
+## Bibliography info: Caveat! 
+Thea's preferences here, full disclosure:
+
+- I use one "master" references.bib file for all my projects
+- This file stays in one location, and I include the path to it in the YAML: `bibliography: /Users/thea/references.bib`
+- My "keys" all have the same format in order to make it easy to remember: firstauthorYEAR (knowles2018)
+     - additional keyword if multiples (knowles2018dbs)
+     
+## Bibliography info: Caveat! 
+Thea's preferences here, full disclosure:
+
+- When I come across a new paper, I immediately add its info to my .bib file
+- I get the bibtex info using Google Scholar's citation tools (specifically, the [GoogleScholar Chrome plugin](https://chrome.google.com/webstore/detail/google-scholar-button/ldipcbpaocekfooobnbcddclnhejkcpn?hl=en))
+- I use [JabRef](https://sourceforge.net/projects/jabref/) to manage my .bib file because I find it more user friendly, but you could also edit the .bib file in any text editor (just be cautious of formatting!)
+
+## CSL file: apa.csl | **CSL**: Citation Style Language
+
+- Specifies how you want citations and bibliography formatted
+- Downloadable from many sources
+     - **One good source**: [Zotero style repository](https://www.zotero.org/styles)
+- .csl files I use often:
+     - `apa.csl`
+     - `biomed-central.csl `
+          - when I need numeric in-text citations
+     - `chicago-annotated-bibliography.csl`
+          - when I'm writing annotated bibliographies
+
+          
+# Writing the manuscript body
+
+## Writing the manuscript body
+
+- Write just as you did for the summary document: 
+     - Markdown-styled text, and R chunks sprinkled throughout!
+- Separate writing tasks: "story writing" versus "results reporting"
+
+
+# Inserting figures and tables | Not data-related!
+
+## Inserting figures and tables
+- You can insert tables and figures in R chunks, as we did in the summary document
+- You can also insert them as non-R elements that wouldn't be accessible from the data
+     - e.g., Participant demographics
+     
+## Inserting tables in Markdown | i.e., not R code
+- Markdown tables have a pretty straightforward syntax: 
+
+<img src="images/markdown_table.png" height="100"/>
+
+- Nevertheless, I often forget it. This site is handy:
+     - [Table generator](http://www.tablesgenerator.com/markdown_tables)
+
+
+## Inserting images in Markdown | i.e., not R code
+
+Several ways to do this! Here are a few:
+
+- Have a subdirectory called `images`; store your non-data-related images here
+
+- `![Caption](images/image1.png)`
+<!-- - `<img src="images/image1.png" height="100"/>` -->
+     
+
+## Inserting tables in R chunks
+Just like how we did it in our summary report!
+
+However: there are many more options within `kable()`
+
+- See [kable documentation](https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html)
+
+
+# Writing the manuscript results | results.Rmd
+
+## Writing the manuscript results | results.Rmd
+
+## Including results as child file
+
+![](images/child.png)
+
+- YAML in the child document doesn't matter; it will inherit the YAML from the "parent" (main) .Rmd document
+     - However, it may be helpful to include enough in the results.rmd YAML to be able to compile it on its own. That way, you can see what the results look like without having to knit the whole manuscript.
+- Source your helper.R file
+
+## Embedding figures
+- Just like in the summary document, but we can add more options to the chunk
+
+![](images/fig_chunk.png)
+
+- We will refer to the figure by its chunk label `calsugsPlot`
+- The caption will be specified by `fig.cap`
+- The figure number can be automatically added, but this requires an extra step for Word document outputs.
+
+## Cross-referencing figures
+Unforunately, the standard word_document output doesn't allow for us to cross-reference Figures and Tables. You can still refer to Tables and Figures in the text, but you have to do it manually (i.e., explicitly type Figure 1, Table 2, etc.)
+
+*But... there's good news*
+
+## Cross-referencing figures | Solution: Bookdown!
+- In the YAML, we can specify a new kind of output: [`bookdown::word_document2`](https://bookdown.org/yihui/bookdown/a-single-document.html)
+- This will allow us to automatically refer to Figures/Tables without having to explicitly refer to them by number
+     - This is helpful if you wind up moving things around in your manuscript.
+- You must be sure to Knit using word_document2 output!
+
+## Cross-referencing figures
+Syntax for cross-referencing with Bookdown::word_document2 output:
+
+<div class="columns-2">
+![](images/fig_xref.png)
+
+![](images/fig_xref_output.png)
+</div>
+
+
+## EXERCISE 7 | Uncomment the child input line and knit the whole manuscript
+
+## MORE EXERCISES
+- Write a sentence in the results.Rmd that cites the article in the .bib file entitled "Fat and sugar: an economic analysis"
+
+     - Then knit the whole manuscript again
+
+- Create a new figure with a label and a caption, then reference it in a new sentence.
+
+- Make a new manuscript from scratch and set up the Intro, Methods, Results, Discussion, and References.
+
+
+
+## More to learn
+- Further customization of YAML
+     - Author affiliations
+     - Abstract, keywords, etc
+- Working with collaborators who don't use R Markdown
+     - incorporating tracked changes?
+     - [This doesn't seem to have an answer yet](https://stackoverflow.com/questions/35945728/ms-word-track-changes-and-rmarkdown)
+- Incorporating [css styles](https://rmarkdown.rstudio.com/html_document_format.html#custom_css) 
+- Fig/Table cross-referencing outside of results... the answer's out there somewhere...
+- [Grammar check in R!](https://github.com/ropenscilabs/gramr)
+
+
+## More to learn
+- It's okay to Google. Lots.
+- It's okay to be hacky at times to *just do the thing*
+     - Efficiency and elegance come with time
+          - Well, sometimes the elegance lags behind
+
+     
+# Awesome resources
+- [Page Piccinini's R for Publication Lessons](https://datascienceplus.com/r-for-publication-by-page-piccinini-lesson-1-r-basics/)
+     - Also contains GREAT explanations of regression analyses
+
+- [Rosanna Van Hespen's guide to writing your thesis with R Markdown](https://rosannavanhespenresearch.wordpress.com/2016/02/03/writing-your-thesis-with-r-markdown-1-getting-started/)
+
+- [A list of other very helpful resources](https://www.one-tab.com/page/d00HO6mxTTuqo2o7aGCffQ)
+
+
+
