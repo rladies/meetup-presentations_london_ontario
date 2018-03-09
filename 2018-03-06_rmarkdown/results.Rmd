@@ -11,7 +11,7 @@ output:
 # Important: If this is a child doc, you can't have duplicate chunk names
 #    e.g., setup exists in the parent .Rmd, so I've changed this chunk name to setup_results
 # An exception is unnamed chunks, which get automatically renamed when you knit.
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,fig.align = "center")
 ```
 
 
@@ -50,17 +50,12 @@ calbevs_plot
 ```
 
 
-See Table \@ref(tab:calsugs_tab).
+See Table \@ref(tab:calsugs).
+<!-- Note that for tables (as opposed to plots), the label you refer to in parentheses must be the same as what is called by kable; not the label of your chunk. An nice way to avoid this distinction giving you a headache is to just name your chunks after the tables/figs. -->
 
-```{r calsugs_tab, results='asis', echo = FALSE}
+```{r calsugs, echo = FALSE}
 knitr::kable((calsugs), booktabs=T, caption="Calories and sugars for each beverage.")
 ```
-
-
-
-<!-- Figure \@ref(fig:figlabel) is shown here.  -->
-
-
 
 We can also just redo the plot
 ```{r fatPlot, echo=FALSE}
@@ -88,7 +83,7 @@ mod1_coeffs[2,1]
 ```
 
 
-Sugars demonstrated a significant main effect on the calorie content of starbucks beverages 
+Sugars demonstrated a significant main effect on the calorie content of starbucks beverages
 (estimate = `r round(mod1_coeffs["sugars", "Estimate"],3)`, 
 $t$ = `r round(mod1_coeffs["sugars", "t value"],3)`, 
 $p$ = `r round(mod1_summary$coefficients["sugars", "Pr(>|t|)"],3)`).
@@ -120,13 +115,6 @@ Here I will reference a table.
 ```{r mod1Coefs, echo=FALSE}
 knitr::kable((mod1_coeffs), caption = "This is the caption for my model coefficients table.")
 ```
-
-
-Other stuff
-- How do we change the row names?
-- if p < 0.001, can we write it out that way?
-
-
 
 
 ## You can save plots
