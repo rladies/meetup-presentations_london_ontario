@@ -1,0 +1,857 @@
+---
+title: "Transitioning from SPSS to R"
+author: "Daryn Cushnie-Sparrow --- R-Ladies London"
+date: "July 7, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, results = 'hide', 
+                      error = FALSE, message = FALSE, warning = FALSE)
+path <- getwd()
+knitr::opts_knit$set(root.dir = path)
+```
+
+### Introduction
+
+For many of us, SPSS has been something we've used for statistical analysis since early in our experience with statistics. Running tests in SPSS might be second-nature to you, and there are lots of resources online for how to do things you may be unclear about. The comfort of SPSS can make it daunting to explore other options; however, SPSS has limitations, and you may have stumbled upon an interesting statistical test that can be run in R and not in SPSS. Alternatively, you may have decided that SPSS licenses are very expensive and inconvenient, and you're interested in other options. I have recently been making the jump from SPSS to R, so I'm hoping to share some of what I've learned that might ease your transition. 
+
+### Initial Setup
+
+We're going to set up an RStudio project that we'll be working in today. Here are the steps you'll need to follow:
+
+1. **Download and install R** 
++ [Windows](http://cran.utstat.utoronto.ca/) 
++ [Mac](http://cran.utstat.utoronto.ca/)
+
+2. **Download and install RStudio**
++ [Here](https://www.rstudio.com/products/rstudio/download/) - Scroll down and find your operating software
+
+3. **Create a new RStudio project in a directory that works for you**
++ Open RStudio
++ Click the ![](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/rcube.PNG) in the top right corner
++ Choose "New Project"... "New Directory"... Then specify the appropriate path and name your folder something like 'SPSStoR'
++ [These](https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects) instructions might be helpful if you are stuck
+
+4. **Download the .Rmd and .csv files provided into your RStudio project directory**
++ [Here's the Google drive link](https://drive.google.com/drive/folders/0BznwYF956_rDRUtoS3N4dldySmc?usp=sharing)
+
+So if my path when I was creating my directory looked like this: 
+![](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/directory.PNG)
+
+Then your folder should look like this once you've downloaded the files. 
+![](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/folder.PNG)
+
+5. **Open the .Rmd file in your RStudio project**
++ Click the ![](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/foldicon.PNG) in the top left
++ Select the .Rmd you downloaded into the same directory
+
+6. **In the .Rmd file, put your cursor on the line just before the section title 'Reading Data into R'**
++ Then click "Run All Chunks Above"
+
+![](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/run.PNG)
+
+### Packrat Setup
+
+SPSS is a one-piece statistical package. All the functionalities and features available to you are included in the installation. R has many useful base functions, but there are tons of packages available from CRAN that allow you to do more things or do them better. When you are working on a large project, you can start to have a lot of packages you’re using, and if you have several of these projects going at once, you might have different packages in each project and different versions. Updating your packages in one project can break your old code in another. Packrat can help you solve this issue. It's a dependency management package that makes your projects isolated, portable and reproducible by keeping your packages in a private library for each project and automatically restores all those packages when you re-open your project or even open it on a different computer.
+At the beginning of any project, initalize Packrat by calling `packrat::init`. 
+
+```{r eval = FALSE}
+install.packages("packrat")
+packrat::init()
+
+```
+
+Now, any packages you install will be part of your packrat library. We're going to need a few packages from the `tidyverse`, so we'll just grab the whole thing. We’ll also need a few other packages. I’ve listed them all below. Run this block to get your packages installed. 
+
+```{r eval = FALSE}
+install.packages("tidyverse")
+install.packages("Hmisc")
+install.packages("car")
+install.packages("lmtest")
+install.packages("ez")
+install.packages("psych")
+install.packages("ggplot2")
+packrat::snapshot()
+```
+
+We can check to see if everything we call in our project is available in the packrat library by calling `packrat::status`. It will also tell us if it detects package calls in the script that are not in the library, and it will tell us if we have packages in our library that aren’t called anywhere in the script. 
+
+```{r eval = FALSE}
+packrat::status()
+```
+
+We’ll need to output a couple files. Wherever you set up your project when you opened R Studio will be your working directory. Save your path to a variable so you don’t have to change it each time it comes up. 
+
+```{r eval = FALSE}
+path <- getwd()
+```
+
+### Reading Data into R
+
+There are lots of ways to read files into R. `read.table` and its wrappers are helpful functions that are part of base R. I like using the `readr` package from the `tidyverse`. Let’s read in the data that we’re going to be using today. I’ve saved this file as a .csv - easily used by both Excel and R. We already installed `readr` when we installed the `tidyverse` earlier, so now we need to load it using `library`. 
+
+```{r}
+library(readr)
+OnOffMaster <- read_csv(file.path(path, "OnOffRLadies.csv"), col_names = TRUE)
+``` 
+
+Our .csv will have come in as a data frame. Let’s take a look at what we have. You can do this in a few ways. Run each of these lines separately (using Ctrl+Enter or Command+Enter) and look at the different ways R will show you your data frame. 
+
+```{r}
+str(OnOffMaster)
+head(OnOffMaster)
+tail(OnOffMaster, n = 10)
+library(dplyr)
+glimpse(OnOffMaster)
+```
+
+You can see that this data frame has 62 observations of 26 variables. This data contains measurements of the voice quality of individuals with Parkinson’s disease (PD) while they are on and off their dopamine medication. We have data on 51 people with PD and on 11 controls. For the controls, we only have measurements for them off medication since they don’t normally take dopamine medication. The ON and DIFF (difference score) columns are entirely missing for these 11 observations. Missing values in R have the value `NA`. This is different than in SPSS, where missing values show up as a single period. 
+
+*Variable Information*
+* VAS stands for “visual-analogue scale” and these numbers represent the person’s voice quality as perceived by unfamiliar listeners. 
+* UPDRS is the Unified Parkinson’s Disease Rating Scale, which is commonly used to assess symptoms of PD. 
+* LED is a person’s Levodopa Equivalent Dose, which we use to compare individuals’ dopamine medication, since people often use different combinations of medications which have different potency. 
+* Shimmer, HNR, CPPS and AVQI are all acoustic measures of voice quality. We also have a couple grouping variables, stored as factors. 
+* PDGroup separates individuals with PD from controls. 
+* VASGroup divides people based on their perceived voice quality off-medication. Individuals with poor voice quality off-medication are coded as Low, and those with better voice quality are coded as High. Controls are coded as Con. 
+* DurationGroup divides people based on how long they’ve had PD. They are binned into Early, Early-Mid, Mid-Late and Late. 
+
+
+### Datasets in SPSS vs. Data Frames in R
+
+In SPSS, we use datasets in the form of a spreadsheet. SPSS datasets are saved as a .sav, store variables in columns and cases in rows. In R, we have several data structures that allow us to handle our data differently. Typically, you’ll store your data in a data frame. A data frame is similar to an SPSS dataset, with variables stored in columns and observations in rows. R allows you to pick out particular variables or observations in a variety of ways, such as indices, dollar notation or functions like `dplyr`’s `select`. If you’ve ever agonized over restructuring your data in SPSS/Excel by copy and pasting columns, this flexibility will be something you’ll appreciate. 
+Let’s take a look at how you can select variables and observations from a data frame using indices and dollar notation. 
+
+```{r}
+# Prints a vector of the whole 7th column
+OnOffMaster[ ,7] 
+# Same as the above – R defaults to the column if no comma is present
+OnOffMaster[7] 
+# Prints a vector of all measurements on the 10th observation
+OnOffMaster[10, ] 
+# Prints the value of the 9th variable on the 50th observation
+OnOffMaster[50, 9]  
+# Prints a vector containing the VAS_OFF column of OnOffMaster
+OnOffMaster$VAS_OFF 
+```
+
+These are helpful ways to select information from a data frame. You’ll probably want to use dollar notation over indices in most cases, because if you delete or rearrange columns, what was once your 5th variable could now be something different. 
+
+The `dplyr` package offers some great data manipulation tools. With `select`, you can use helper functions like `starts_with`, `ends_with`, `contains` and more. You can also just provide a list of variables you’d like it to select, or you can put a minus sign in front to tell it to remove that item. 
+I had some key columns that delineated each condition (OFF, ON, and DIFF). These columns are unnecessary, and just provided visual separation in Excel when I was working with a larger version of this dataset. Let’s remove them using `dplyr`’s `select`. We’ll start working with a different data frame, just in case we ever want to access to original without reading it back in. 
+
+```{r}
+library(dplyr)
+OnOff <- select(OnOffMaster, -starts_with("Cond"))
+glimpse(OnOff)
+```
+
+We can see that all 3 of those key columns are now gone, since had “Cond” at the start. We now have 23 variables, so we know we haven’t deleted anything else by mistake. 
+Another thing we need to make sure we do is factor all our variables that aren’t measurements. You can do this automatically when reading it in using the base R function `read.csv` by specifying `stringsAsFactors = FALSE`, but I prefer to do this manually so I can specify my levels. If you don’t specify your levels, readr will list the levels alphabetically. The default for ordering is `ordered = FALSE`, meaning that the variable is categorical with no ordinance. If you have an ordinal variable, you’ll need to specific `ordered = TRUE`. 
+
+```{r}
+OnOff$Participant <- factor(OnOff$Participant)
+OnOff$PDGroup <- factor(OnOff$PDGroup, levels = c("PD", "Con"))
+OnOff$VASGroup <- factor(OnOff$VASGroup, levels = c("Low", "High", "Con"))
+OnOff$DurationGroup <- factor(OnOff$DurationGroup, 
+                              levels = c("Early", "Early-Mid", 
+                                         "Mid-Late", "Late", "Con"))
+```
+
+In addition to selecting variables, sometimes you might want to choose particular observations. You can do this with `dplyr`’s `filter`. For some analyses, I might only want to include people with PD. Let’s pick those ones and leave out all the controls. 
+
+```{r}
+pds <- filter(OnOff, PDGroup == "PD")
+glimpse(pds)
+```
+
+The result has 23 variables, but only 51 observations. There are some analyses I want to do that include only people with PD, but I also don’t want to use any of the difference scores. We could do this by using `select` on the data frame we just made above. Another way we could do this is using the `%>%` operator, called a ‘pipe’. Piping functions together is helpful if you’re doing several manipulations. 
+
+```{r} 
+PDsOnOff <- 
+OnOff %>%                          # Specify what data to use
+select(-ends_with("DIFF")) %>%     # Skip anything that ends with “DIFF”
+filter(PDGroup == "PD")            # Only take PD observations
+```
+
+
+### Writing an SPSS file
+
+If you wanted to compare SPSS and R or you had a test you wanted to run in SPSS, you’ll need to save that data as a .sav. You can do this using the `haven` package from the `tidyverse`.
+
+```{r}
+library(haven)
+write_sav(OnOff, file.path(path, "OnOffData.sav"))
+```
+
+Check your project directory to see if you successfully wrote the file here. One reason you might want to use R before creating an SPSS file would be that importing variable names from and Excel document in SPSS is more challenging. R reads column names easily and allows you to specify variable types in batches, which haven feeds into the .sav. When you open this file in SPSS, your factors will show as nominal with ordered factors as ordinal. It will also convert your factor levels to numerical values so that SPSS knows how to handle them, but your will store your labels as part of the value, so your SPSS output will show your label names instead. 
+
+### Correlation
+
+Bivariate correlations are a helpful tool in most fields, allowing us to quickly get a sense of association between variables. Base R allows us to do a bivariate correlation easily using `cor`. 
+
+Let's see if there are associations between our voice quality measures. We'll compare across PD and control, so we'll only test in the off-state. I only want to include UPDRS, VAS, shimmer, HNR, CPPS and AVQI. Put those into a data frame named "bivars". 
+
+```{r}
+# Exercise 1: 
+# Select UPDRS, VAS, shimmer, HNR, CPPS and AVQI, only in the off state. 
+# Save this to a data frame called bivars. 
+
+```
+
+Now that we have our data frame, let's use `cor` to run Pearson correlations. We want missing values to be omitted on a pairwise basis, which it will find in the UPDRS column for controls. 
+
+```{r}
+cor(bivars, method = "pearson", use = "pairwise.complete.obs")
+
+```
+
+This was convenient, but notice that this output only includes the r values, not p values. Most of the time, we're going to want both of those. Lots of packages and functions exist that can do this. I like `rcorr` from the `Hmisc` package. `rcorr` only accepts a matrix, so we'll need to use `as.matrix` in the `rcorr` call to coerce our data frame to a matrix. 
+
+```{r}
+library(Hmisc)
+bivarsOut <- rcorr(as.matrix(bivars), type = "pearson")
+
+```
+
+The output from this is 3 tables. The first includes the r values, the second includes the number of pairwise observations used to analyze each pair of variables, and the third includes the p values for each correlation. Using `str` on this output will reveal that this is a list of 3 matrices. If you want to convert this output into a data frame, you'll need to select individual elements. You can do this with dollar notation. 
+
+```{r}
+bivarsOut$r
+bivarsOut$n
+bivarsOut$P
+```
+
+I stumbled upon a handy custom function [here](http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software) that flattens `rcorr` output into a nice data frame including only the r and p values.
+
+```{r}
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+  )
+}
+
+bivarsflat <- flattenCorrMatrix(bivarsOut$r, bivarsOut$P)
+```
+
+I personally don't like scientific notation. I prefer long decimals until I'm ready to do final rounding. You can turn off scientific notation using `options`. All this does is change how R prints out values within that session - not how it calculates behind the scenes. Look at our flattened correlation results again now to see the difference.
+
+```{r}
+options(scipen = 999)
+
+```
+
+If you wanted to change it back, you can just run `options(scipen = 0)`. 
+
+We often default to Pearson to take a quick look at associations, but if we want to report results, we should check that parametric testing is appropriate. Let's check the normality of our variables using the Shapiro-Wilk test.  
+
+```{r}
+shapiro.test(bivars$UPDRS_OFF)
+shapiro.test(bivars$VAS_OFF)
+shapiro.test(bivars$Shimmer_OFF)
+shapiro.test(bivars$HNR_OFF)
+shapiro.test(bivars$CPPS_OFF)
+shapiro.test(bivars$AVQI_OFF)
+```
+
+If we had run the Shapiro-Wilk as a part of SPSS' Explore procedure, the output would look like this:
+
+![Testing for Normality in SPSS' Explore](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/SWtestforbivars.PNG)
+
+The results show that shimmer and AVQI are non-normal. In this case, we would need to use a Spearman correlation instead. Let's recalculate our correlations using Spearman instead of Pearson. Then we'll flatten it and pick out the ones that include Shimmer and AVQI. 
+
+```{r}
+spearOut <- rcorr(as.matrix(bivars), type = "spearman")
+```
+
+Now that we have that output, let's flatten it again using that handy custom function. 
+
+```{r}
+# Exercise 2: 
+# Use flattenCorrMatrix() to flatten our Spearman rcorr output
+# into a data frame. 
+
+```
+
+Here I've just pulled out the relevant correlations from each flattened matrix. 
+
+```{r}
+spear <- rbind(spearFlat[2:3,], spearFlat[6,], 
+                 spearFlat[9,], spearFlat[11:15,])
+pear <- rbind(bivarsflat[1,], bivarsflat[4:5,], bivarsflat[7:8,],
+              bivarsflat[10,])
+```
+
+Your turn! Test the association between UPDRS and HNR, on medication. First, test for normality using the Shapiro-Wilk test. Then run `rcorr`. Save the results to 'ex3'. Use `flattenCorrMatrix` to tidy the output, and save that to 'ex3table'.
+
+```{r}
+# Exercise 3:
+# Run bivariate correlation between UPDRS and HNR, on medication. 
+
+
+
+
+```
+
+### Simple linear regression
+
+We're just going to touch on regression today, mostly as it pertains to visualization correlation. Regression is a *huge* area in R, and there are lots of resources that can help you figure out what regression can do for you. I've included some resources at the end in the **Resources** section to get you started. 
+
+We've got a .49 correlation between VAS and HNR - let's take a deeper look at that. How is an individual's perceived voice quality affected by their harmonic-to-noise ratio? This would give us a clue about how strongly related this acoustic measure is to our perception of quality. 
+
+One of the assumptions of linear regression is a roughly linear relationship between the variables. Let's quickly visualize it with base graphics. 
+
+
+```{r}
+plot(OnOff$VAS_OFF, OnOff$HNR_OFF)
+```
+
+You can see a roughly linear positive trend, so we can proceed. Other assumptions need to be tested after we set up our model, so let's do that next. 
+
+```{r}
+# Regression formula syntax is y ~ x, or y as a function of x. 
+# x is our independent variable (HNR in this case), 
+# and y is our dependent variable (VAS in this case).
+
+vasHNRmodel <- lm(VAS_OFF ~ HNR_OFF, data = OnOff)
+
+```
+
+We're going to test 3 very important assumptions: independence of observations, homogeneity of variance (homoscedasticity) and normality of residuals. We can test independence with the Durbin-Watson test, `dwtest` from the `lmtest` package. We want Durbin-Watson to be non-significant, with a test statistic close to 2. Homogeneity of variance and normality of residuals are both assessed visually by calling `plot` on a model. The 2 plots on the left both allow us to assess homogeneity of variance. If homoscedasticity is upheld, the line should be approximately flat. The top right plot (a Q-Q plot) shows us the normality of the residuals. The points should be very close to the line if the residuals are normal. 
+
+```{r}
+library(lmtest)
+# Durbin-Watson to check independence of observations/autocorrelation
+dwtest(vasHNRmodel)
+
+# Homogeneity of variance (2 left plots) & normality of residuals (top-right)
+par(mfrow=c(2,2))
+plot(vasHNRmodel)
+```
+
+Now that we know our assumptions are upheld, let's take a look at a summary of our model
+
+```{r}
+summary(vasHNRmodel)
+```
+
+We see that R-squared is equal to 0.24, so we can say that about 24% of the variance in perceived voice quality is predicted by HNR.  
+
+If we did our regression in SPSS, our output would look like this: 
+
+![SPSS Linear Regression Output](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/regression.PNG)
+
+Information in the **Model Summary** table is found at the bottom of the `summary` of our model, plus Durbin-Watson which we called separately using `dwtest`. If we wanted to get the information in the **ANOVA** table, we can call a summary on an `aov` on our model. 
+
+```{r}
+summary(aov(vasHNRmodel))
+```
+
+The **Coefficients** table is similar to our summary. What we're missing are standardized coefficients and confidence intervals. We can get the standardized coefficient by calling the `lm.beta` function in the `QuantPsyc` package on our model. Confidence intervals can be calculated using `confint`. 
+
+```{r}
+# Confidence interval
+confint(vasHNRmodel, 'HNR_OFF', level = 0.95)
+confint(vasHNRmodel, '(Intercept)', level = 0.95)
+```
+
+*A word of caution:* If you load in the `QuantPsyc` package, it will load `MASS` by default. `MASS` has a `select` function that will mask `dplyr`'s select. You'll notice this when you next try to use `select`, because you'll get error messages about incorrect arugments. To correct this problem, you can reassign `select` like this. 
+
+```{r}
+select <- dplyr::select
+```
+
+R doesn't given statistics on the residuals by default, but this can be done. You should be aware that SPSS calculates standardized residuals based by dividing residuals by their root mean square error. You can look into this by looking at the [SPSS Algorithm Manual](ftp://public.dhe.ibm.com/software/analytics/spss/documentation/statistics/24.0/en/client/Manuals/IBM_SPSS_Statistics_Algorithms.pdf). `rstandard` will give you the SPSS Studentized residuals. 
+
+```{r}
+# Row 1: predicted values
+row1 <- c(
+min(vasHNRmodel$fitted.values),
+max(vasHNRmodel$fitted.values),
+mean(vasHNRmodel$fitted.values),
+sd(vasHNRmodel$fitted.values),
+nobs(vasHNRmodel))
+
+# Row 2: residuals
+row2 <- c(
+min(vasHNRmodel$residuals),
+max(vasHNRmodel$residuals),
+mean(vasHNRmodel$residuals),
+sd(vasHNRmodel$residuals),
+nobs(vasHNRmodel))
+
+# Row 3: standardized predicted values
+stanfit <- (vasHNRmodel$fitted.values - mean(vasHNRmodel$fitted.values))/
+  sd(vasHNRmodel$fitted.values)
+row3 <- c(
+min(stanfit),
+max(stanfit),
+mean(stanfit),
+sd(stanfit),
+nobs(vasHNRmodel))
+
+# Row 4: standardized residuals
+stanr <- vasHNRmodel$residuals/sqrt(sum(vasHNRmodel$residuals^2)/vasHNRmodel$df.residual)
+row4 <- c(
+min(stanr),
+max(stanr),
+mean(stanr),
+sd(stanr),
+nobs(vasHNRmodel))
+
+# Binding these into a data frame
+residstats <- rbind(row1, row2, row3, row4)
+colnames(residstats) <- c("Min", "Max", "Mean", "SD", "N")
+rownames(residstats) <- c("Predicted Value", "Residuals", "Std. Predicted", "Std. Residual")
+```
+
+Now you've got all the same information SPSS provided in its output. 
+
+Our coefficients will allow us to add a trendline onto our plot of VAS and HNR. Let's plot that with `ggplot`. Note that in `ggplot`, you'll have to manually pick out the coefficients for the intercept and slope. The coefficient estimate for your intercept (top left of the coefficients table) is your intercept, and the estimate for your independent variable (HNR_OFF for us) is your slope.
+
+```{r}
+library(ggplot2)
+ggplot(OnOff,aes(x=HNR_OFF, y=VAS_OFF,na.rm=TRUE))+
+  geom_point()+
+  geom_abline(intercept=2.222, slope=2.202)+
+  labs(x="Harmonic-to-Noise-Ratio", y="Perceived Voice Quality",
+       title="VAS and HNR")+
+  theme(panel.background=element_rect(fill="white",
+                                      colour="black"))+
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+Here's a nice, simple visualization of the relationship between these two variables. For more on regression, check out the **Resources** section at the bottom. 
+
+### Differences between two groups
+
+Evaluating if two groups are significantly different on a given metric is a very common goal for many of us. We can do this in several ways, including t-tests, their non-paraemtric equivalents and ANOVA. Let's go through a few of these methods and compare the output we get to what we'd expect in SPSS. 
+
+#### Independent t-test 
+
+An independent t-test tests if two independent groups are significant different on a measure. Similar to regression, we have 3 major assumptions to verify. We need independence of observations, a normal distribution of the dependent variable, and homogeneity of variance. Unlike regression, we don't need to test for independence of observations here - this is a study design characteristic. You should choose two groups that are not related. We do need to test for the other two assumptions: normality with the Shapiro-Wilk and homogeneity of variance with Levene's test. 
+
+Let's do an independent t-test comparing PDs and controls on VAS (perceived voice quality). Our dependent variable will be VAS_OFF, and our independent variable will be PDGroup, our variable the specifies whether a person has PD or not. First we'll need to test for normal distribution using the Shapiro-Wilk. We've done this before, when we did correlations above. Go ahead and test the normality of VAS_OFF. 
+
+```{r}
+# Exercise 4: Testing normality of VAS_OFF with Shapiro-Wilk
+
+
+
+```
+
+Now we'll need to test homogeneity of variance with `leveneTest`, from the `car` package. 
+
+```{r}
+library(car)
+leveneTest(OnOff$VAS_OFF, OnOff$PDGroup, center = mean)
+```
+
+Levene's test gives a p value > .05, so the assumption of homogeneity of variances is met and we can proceed with our t-test. If we did this in SPSS, our output would look like this:
+
+![Independent t-test SPSS Output](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/indt.PNG)
+
+Notice that SPSS runs Levene's test as part of its procedure, and the output table includes two rows: equal variances assumed, and equal variances not assumed. This is determined by the result of Levene's test. If homogeneity of variance is upheld, you can use Student's t-test. If Levene's test is significant, you must use a Welch t-test. In R, the default for `t.test` is to calculate a Welch t-test. If you're looking for a Student's t-test, be sure to specify `var.equal = TRUE`. 
+
+```{r}
+t.test(OnOff$VAS_OFF ~ OnOff$PDGroup, var.equal = TRUE)
+t.test(OnOff$VAS_OFF ~ OnOff$PDGroup)
+```
+
+The output from our t-test includes almost all of the same information as the SPSS output. All we're missing is mean difference and the standard error of the difference. Mean difference is relatively easy to calculate - standard error of the difference is a bit more complex but here it is! Once again, these funky formulas are coming from the SPSS algorithm manual (linked above). 
+
+```{r}
+# Mean difference - the same for Student and Welch tests 
+pds <- filter(OnOff, OnOff$PDGroup == "PD")
+controls <- filter(OnOff, OnOff$PDGroup == "Control")
+meandiff <- mean(pds$VAS_OFF) - mean(controls$VAS_OFF)
+npd <- sum(!is.na(pds$VAS_OFF))
+ncon <- sum(!is.na(controls$VAS_OFF))
+
+# Standard error of the difference: unpooled - for Welch's t-test 
+errordiffunpooled <- sqrt((var(pds$VAS_OFF)/npd) + 
+                            (var(controls$VAS_OFF)/ncon))
+# Stdandard error of the difference: pooled variance - for Student's t-test
+poolvar <- ((npd-1)*var(pds$VAS_OFF) + 
+              (ncon-1)*var(controls$VAS_OFF))/(npd + ncon -2)
+errordiffpooled <- sqrt(poolvar)*sqrt(1/npd+1/ncon)
+```
+
+Let's practice an independent t-test. Compare PDs and controls on HNR using an independent t-test. Test your assumptions of normality and homogeneity of variance, and then do the t-test variant that is appropriate based on your homogeneity of variance result. 
+
+```{r}
+# Exercise 5: Independent t-test comparing HNR_OFF across PDGroup
+
+
+
+```
+
+#### Mann-Whitney
+
+If our assumption of normality is violated, we need to use a nonparametric test. The nonparametric equivalent of an independent t-test is a Mann-Whitney (or Mann-Whitney-Wilcoxon). Here's an example of a Mann-Whitney. We've specified `exact = TRUE` to allow us to compare to SPSS results. 
+
+```{r}
+shapiro.test(OnOff$Shimmer_OFF)
+wilcox.test(OnOff$Shimmer_OFF ~ OnOff$PDGroup, paired = FALSE, exact = TRUE)
+
+```
+
+In SPSS, there are two ways to run a Mann-Whitney. Going through the legacy procedure and opting for an 'exact' significance instead of only asymptotic produces the following output:
+
+![Mann-Whitney legacy procedure](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/MWleg.PNG)
+
+This output matches our SPSS significance, but the test statistic is much different. This is a result of the order in which the groups were compared. If we flip the factor levels of 'PDGroup', we'll get a test statistic of 213 instead of 348. Note that what R calls W when we specify `paired = FALSE` is Mann-Whitney's U - confusing! This is discussed further [here](https://stats.stackexchange.com/questions/79843/is-the-w-statistic-output-by-wilcox-test-in-r-the-same-as-the-u-statistic). 
+
+Using the new procedure, exact significance is not provided, so the p-value will not match this output. 
+
+![Mann-Whitney new procedure](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/newMW.PNG)
+
+The test statistic here matches, but the p-value is off (because it's asymptotic). The asymptotic p-values differ in R and SPSS. As of yet, I haven't uncovered a way to fully reconcile these differences. This is another SPSS-R quirk on my to-do list! *Note:* Be aware that when using a Mann-Whitney, you need to be sure that the shape of the distributions matches - otherwise, you cannot compare medians, only mean ranks. In this case, based on the distributions, we've only compared mean ranks. This is true in many cases - discussed more [here](https://www.r-bloggers.com/example-2014-6-comparing-medians-and-the-wilcoxon-rank-sum-test/).   
+
+#### Dependent t-test
+
+For comparisons among related groups in different conditions, a dependent t-test is needed. Dependent t-tests in R are very similar to their independent counterparts. We need to test for normality using Shapiro-Wilk again. If normality is met, we can go ahead and run our t-test. The syntax for this is the same except that we need to specify `paired = TRUE`. Let's compare the CPPS of PDs when they're on and off their medication. We made a data frame with only PD observations on and off medication using `select` and `filter` earlier called 'PDsOnOff', so we'll use that instead of our usual 'OnOff' data frame. 
+
+```{r}
+t.test(PDsOnOff$CPPS_OFF, PDsOnOff$CPPS_ON, paired = TRUE)
+```
+
+If we had done this in SPSS, we'd get the following output: 
+
+![SPSS dependent t-test](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/deptcpp.PNG)
+
+We get mostly the same information in our `t.test` output. SPSS also provides us the mean, standard deviation and mean standard error. We can get these by feeding the difference scores to `psych`'s `describe`.
+
+```{r}
+diff <- PDsOnOff$CPPS_OFF - PDsOnOff$CPPS_ON
+library(psych)
+describe(diff)
+```
+
+#### Wilcoxon Signed-Rank Test
+
+Let's look at the Wilcoxon signed-rank test, the nonparametric counterpart to a dependent t-test. This has similar syntax to the `wilcox.test` call we used with the Mann-Whitney. 
+
+```{r}
+# Notice that the order in which you specify the groups
+# changes the test statistic. SPSS uses the latter order.
+
+wilcox.test(PDsOnOff$Shimmer_OFF, PDsOnOff$Shimmer_ON, paired = TRUE, exact = TRUE)
+wilcox.test(PDsOnOff$Shimmer_ON, PDsOnOff$Shimmer_OFF, paired = TRUE, exact = TRUE)
+shimdiff <- PDsOnOff$Shimmer_ON - PDsOnOff$Shimmer_OFF
+hist(shimdiff)
+```
+
+With a Wilcoxon signed-rank test, we have the same order effect on the test statistic as we saw with the Mann-Whitney. When comparing your results to SPSS results for sanity-checking purposes, try to remember that if you flip your groups (by changing your factor levels or by changing the order in the formula) you might solve your issue! We've called `hist` to quickly assess our distributional assumption in the Wilcoxon, which is that it should be approximately symmetrical. A fair amount of leeway is okay here, since symmetrical data is hard to come by, so I'd say this is symmetrical enough. 
+
+Here's the SPSS output from the legacy dialog to match the Wilcoxon above:
+
+![SPSS Wilcoxon signed-rank: legacy](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/wilcoxleg.PNG)
+
+![SPSS Wilcoxon signed-rank: new](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/newwilcox.PNG)
+
+Again, we see that the asymptotic p-value (`exact = FALSE`) is different between SPSS and R, but if you specify an exact significance, you'll get the same results. 
+
+Let's see if there's a significant difference between PDs on and off medication on HNR. 
+
+```{r}
+# Exercise 5: Test for a significant difference between PDs on HNR
+# depending on their medication state. 
+# Test your assumptions and then conduct the appropriate test. 
+
+
+
+```
+
+### ANOVA
+
+ANOVA is a popular procedure in SPSS for many study designs, but it's less popular in R. This will be reflected by a couple issues we're going to encounter and discuss as we go through a few ANOVA designs as examples. 
+
+#### One-way ANOVA
+
+One of the tests we did on this data was a one-way ANOVA comparing people's perceived voice quality based on their VASGroup. You might recall from above in the variable definitions that VASGroup divides people based on their voice quality off-medication into 3 groups: low voice quality, high voice quality and control. We'll need to start by testing normality and homogeneity using Shapiro-Wilk and Levene's. 
+
+```{r}
+shapiro.test(OnOff$VAS_OFF)
+leveneTest(OnOff$VAS_OFF, OnOff$VASGroup, center = mean)
+```
+
+Our assumptions are upheld, so we'll go ahead and construct our model. There are a few ways we can do an ANOVA in R. I'll demonstrate 3 ways, which we can compare to SPSS and discuss. Before you run your ANOVA, you need to set your contrasts to match SPSS. This is discussed [here](http://myowelt.blogspot.ca/2008/05/obtaining-same-anova-results-in-r-as-in.html). 
+
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+**Using `aov`**
+```{r}
+# Specify the model using lm()
+vasmod <- lm(VAS_OFF ~ VASGroup, data = OnOff)
+vasaov <- aov(vasmod)
+summary(vasaov)
+```
+
+**Using `Anova` from the `car` package**
+```{r}
+# Specify the model using lm(), just like with aov()
+vasmod <- lm(VAS_OFF ~ VASGroup, data = OnOff)
+library(car)
+vasAnova <- Anova(vasmod, type = 3)
+vasAnova
+```
+
+**Using `ezANOVA` from the `ez` package**
+```{r}
+library(ez)
+vasEZ <- ezANOVA(data = OnOff, dv = VAS_OFF, 
+                    between = VASGroup, 
+                    wid = Participant, type = 3, 
+                    detailed = TRUE, 
+                    return_aov = TRUE
+                    )
+vasEZ
+```
+
+Here's our SPSS output for this ANOVA:
+
+![SPSS one-way ANOVA](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/anovaoneway.PNG)
+
+If we look at our sums of squares and F-values, we can see that for this test, `aov` and `Anova` results both give the same results, but ezANOVA provides different results. We'll just focus on `aov` and `Anova`. In the `Anova` call, we specify `type = 3`. This is because SPSS uses Type III sums of squares and R defaults to Type I. But we didn't specify type in the `aov` call. In some cases, Type I and Type III sums of squares will be the same. This will depend on characteristics of your individual model. 
+
+**Post-hoc testing**
+There are some downsides to using `Anova` over `aov`. For example, `aov` is easier to do post-hoc testing with. If you want to do Tukey HSD, you need an `aov`, as neither `Anova` nor `ezANOVA` support Tukey. You can do pairwise t-tests with any option though, and you can specify p value adjustment methods like Bonferroni and Holm. 
+
+```{r}
+TukeyHSD(vasaov)
+pairwise.t.test(OnOff$VAS_OFF, OnOff$VASGroup, p.adjust = "bonf")
+```
+
+Here's what SPSS gives us for post-hoc testing:
+
+![SPSS one-way ANOVA: Tukey's HSD](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/tukeyoneway.PNG)
+![SPSS one-way ANOVA: Bonferroni](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/vasonewaybonf.PNG)
+
+Both post-hoc test options give us the same results as R here.
+
+#### One-way repeated measures ANOVA
+
+You can't do a one-way repeated measures ANOVA with this data, so we're going to import some data just for demonstration. We'll be importing `WorldPhones`, which contains information on the number of telephones in the world from 1951 to 1961. 
+
+```{r}
+data(WorldPhones)
+head(WorldPhones)
+```
+
+This data has the years as the observations, rather than as variables. We're going to flip this using the transpose function `t`.
+
+```{r}
+phonesT <- t(WorldPhones)
+phonesT <- data.frame(phonesT)
+```
+
+I'm not really interested in looking at every year - I'd rather just look at 1951, 1956 and 1961 since those are the mid and endpoints. 
+
+```{r}
+# Exercise 6: Select 1951, 1956 and 1961 from phonesT. 
+# Tip: look at phonesT with head() to see what the exact
+# variable names are. Name this new data frame "phones_wide"
+
+
+```
+
+Let's rename those columns for ease, and turn those row names into their own column - we're going to need the countries in their own variable for analysis.  
+
+```{r}
+colnames(phones_wide) <- c("1951", "1956", "1961")
+countries <- rownames(phones_wide) 
+phones_wide <- cbind(countries, phones_wide)
+```
+
+If you were at the last R-Ladies meetup with Monica, you'll remember talking about "tidy" data. For our larger dataset, we left it pretty wide because of the nature of the data. For this one, we're going to want to `gather` this into a long dataset. For more on long and wide data, look [here](http://www.cookbook-r.com/Manipulating_data/Converting_data_between_wide_and_long_format/) or check out the 'Cleaning data in R' course on DataCamp.
+
+```{r}
+library(tidyr)
+phones <- gather(phones_wide, Year, Amount, "1951", "1956", "1961")
+
+# Factoring our categorical variable and case identifier
+phones$Year <- factor(phones$Year)
+phones$countries <- factor(phones$countries)
+```
+
+That data's looking nice and tidy. We're ready to do our analysis, but first let's write it to a .sav so we could compare it in SPSS. We're actually going to write our wide version, because SPSS prefers wide data. 
+
+```{r}
+# Exercise 7: Write our phones_wide data frame to a .sav using haven
+# Hint: we did this earlier in the 'Writing an SPSS file' section
+
+
+```
+
+We need to test our assumptions of sphericity and normality. We can test normality in advance with Shapiro-Wilk. 
+
+```{r}
+library(car)
+shapiro.test(phones$Amount)
+```
+
+Let's look at a few ways to run this ANOVA. 
+
+**Multivariate model**
+This method is actually a multivariate design, we'll just be using the univariate table from it. This method and the rationale for using it are by Paul Gribble and you can read about it [here](https://gribblelab.wordpress.com/2009/03/09/repeated-measures-anova-using-r/). This method will run a Mauchly's test as part of its procedure, so we can go ahead and construct our model.
+
+A multivariate model requires a matrix, not a data frame. A matrix has to have all the same class, so we need to remove our column containing country names. This matrix needs to be in wide format, so we'll use our pre-tidied version.   We also will need to define a factor including only our factor levels. 
+
+```{r}
+# Getting our data into a matrix, not a data frame 
+phones_grib <- select(phones_wide, -countries)
+phones_grib <- as.matrix(phones_grib)
+
+# Defining a multivariate model
+mod <- lm(phones_grib ~ 1)
+
+# Defining our design factor
+year <- factor(c("1951", "1956", "1961"))
+
+# Specifying the model
+modAnova <- Anova(mod, idata = data.frame(year), 
+                  idesign = ~year, type = "III")
+
+# Multivariate = FALSE just tells R to skip printing 
+# the multivariate tables. 
+summary(modAnova, multivariate = FALSE)
+```
+
+**Using `aov`**
+This method is simple, but we can't run Mauchly's test of Sphericity using this method. 
+
+```{r}
+phonesaov <- aov(Amount ~ Year + Error(countries/Year), data = phones)
+summary(phonesaov)
+```
+
+**Using `ezANOVA`**
+This is the simplest method for this type of ANOVA. Mauchly's test is included in the function.
+
+```{r}
+phonesEZ <- ezANOVA(data = phones, dv = Amount, wid = countries, 
+                       within = Year, type = 3, detailed = TRUE, 
+                       return_aov = TRUE)
+phonesEZ$ANOVA
+phonesEZ$`Mauchly's Test for Sphericity`
+```
+
+Here's our SPSS output so we can compare:
+
+![SPSS repeated measures ANOVA](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/rmanova.PNG)
+
+![Mauchly's test](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/rmmauchly.PNG)
+
+Our Mauchly results for `ezANOVA` and our multivariate method match up nicely with SPSS output. Similarly, the ANOVA results for all 3 of these methods matches SPSS. `aov`'s greatest flaw is that it doesn't support Mauchly's test, but none of these methods allow for easy post-hoc testing. 
+
+**Post-hoc testing**
+For all of these methods, we'll need to do pairwise t-tests as our post-hoc tests. Let's look at a Bonferroni correction here. 
+
+```{r}
+pairwise.t.test(phones$Amount, phones$Year, p.adjust = "bonf")
+pairwise.t.test(phones$Amount, phones$Year, p.adjust = "none")
+```
+
+![SPSS post-hoc testing](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/pairwiserm.PNG)
+
+Note that these results are bunch different than SPSS' pairwise results - R yields much higher p values even without the Bonferroni correction. This is not a difference I've been able to reconcile yet. 
+
+#### Two-way ANOVA
+
+Doing a two-way ANOVA will be similar to the one-way ANOVA we did above, but gives us an opportunity to discuss interaction. Let's do an ANOVA comparing perceived voice quality among PDs as a function of VASGroup and DurationGroup. DurationGroup bins individuals into 4 groups based on their disease duration. With a two-way ANOVA, we need to test for normality and homogeneity of variance, like we did with a one-way. 
+
+```{r}
+shapiro.test(pds$VAS_OFF)
+leveneTest(pds$VAS_OFF, pds$VASGroup, center = mean)
+leveneTest(pds$VAS_OFF, pds$DurationGroup, center = mean)
+```
+
+
+**Using `aov`**
+Without `drop1`, `aov`'s results do not match SPSS. Adding `drop1` changes the term deletion to align it with SPSS. Read more about this [here](http://www.statmethods.net/stats/anova.html). 
+
+```{r}
+twowayaov <- aov(VAS_OFF ~ VASGroup*DurationGroup, data = pds)
+drop1(twowayaov, .~., test = "F")
+```
+
+**Using `Anova`**
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+twowayanova <- Anova(lm(VAS_OFF ~ VASGroup*DurationGroup, data=pds), type=3)
+```
+
+**Using `ezANOVA`**
+```{r}
+twowayEZ <- ezANOVA(data = pds, dv = VAS_OFF, wid = Participant, 
+                       between = .(VASGroup, DurationGroup), type = 3, 
+                       detailed = TRUE, 
+                       return_aov = TRUE
+)
+twowayEZ$ANOVA
+```
+
+Here's what SPSS gives us:
+
+![SPSS two-way ANOVA](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/anovatwoway.PNG)
+
+All 3 of our methods align with SPSS results. 
+
+**Post-hoc testing**
+We need to do post-hoc testing on DurationGroup, since we have 4 levels. 
+
+```{r}
+pairwise.t.test(pds$VAS_OFF, pds$DurationGroup, p.adjust = "bonf")
+TukeyHSD(twowayaov)
+```
+
+![SPSS two-way post-hoc tests](/Users/daryncsparrow/OneDrive/School/Research/R/SPSStoR/Images/posthoctwoway.PNG)
+
+Our Bonferroni results match SPSS, but once again, Tukey results are different. There is likely a difference in how it's being calculated which could be uncovered with a little (a lot) more digging. That's a problem for another day!
+
+#### ANOVA Practice
+
+Try a one-way ANOVA on your own. Compare CPPS_OFF across DurationGroup. Don't forget to test your assumptions of normality and homogeneity of variance. Use Tukey's HSD as your post-hoc test. 
+
+```{r}
+# Exercise 8: one-way ANOVA examining CPPS across DurationGroup
+# Test assumptions of normality and homogeneity of variance, and  
+# use Tukey for post-hoc testing. 
+
+
+```
+
+### Conclusion
+
+I hope this meetup was helpful in some ways! The transition from SPSS to R isn't the simplest, and there are certainly quirks of each that can make things more complex - mostly if you're looking to match SPSS and R results exactly. Results provided by SPSS and R are both credible, even when they differ. The reason I've tried to match results here is that I recognize many are hesitant to switch to R, feeling like you know what SPSS does and what those results mean to you. I hope I've been able to demonstrate that for many tests, these results do align well. In other cases, mismatches are not necessarily because one of the two is doing something *incorrect*; there are lots of parameters and decisions made behind the scenes and there can be multiple ways to meet similar statistical goals with credibility. 
+
+### Resources
+
+If you're stuck, you can reach out to me - I probably won't have an answer for you off-hand, but I'm certainly willing to look into things with you. *dcushni@uwo.ca*
+
+* http://www.r-tutor.com/elementary-statistics
+* http://tutorials.iq.harvard.edu/R/Rstatistics/Rstatistics.html 
+* http://r-statistics.co/Assumptions-of-Linear-Regression.html
+* http://www.statmethods.net/stats/anova.html
+* http://myowelt.blogspot.ca/2008/05/obtaining-same-anova-results-in-r-as-in.html
+* http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
+* https://psychwire.wordpress.com/2011/07/10/migrating-from-spssexcel-to-r/
+* https://www.r-bloggers.com/example-2014-6-comparing-medians-and-the-wilcoxon-rank-sum-test/
+* http://rmhogervorst.nl/cleancode/blog/2016/02/20/from-spss-to-r-part1.html
+* http://gribblelab.org/stats/index.html
+* ftp://public.dhe.ibm.com/software/analytics/spss/documentation/statistics/24.0/en/client/Manuals/IBM_SPSS_Statistics_Algorithms.pdf
+
+
+
+
+

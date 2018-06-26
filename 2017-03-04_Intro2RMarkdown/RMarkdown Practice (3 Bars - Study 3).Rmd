@@ -1,0 +1,61 @@
+---
+title: "Bar graph Study 3 - Practice"
+author: "Sinthiya T"
+date: "April 2, 2016"
+output: html_document
+---
+
+**First open the file that was derived from the OSF (https://gordonpennycook.wordpress.com/data/)**
+```{r, echo=FALSE}
+`Barr.et.al..(2015)_Study3` <- read.csv("~/Documents/PSYCH 480/Assignment 4/Barr et al. (2015)_Study3.csv")
+Study3<-`Barr.et.al..(2015)_Study3`
+```
+
+***
+
+```{r, echo=FALSE}
+Study3SPoverall<-as.factor(Study3$SP_Use)
+Study3BPS<-as.numeric(Study3$BPS)
+```
+
+
+***
+Plot the graph  **Study 3: Relationship between Minutes Using Smartphone\nand Mean Accuarcy on Boredom Proneness**
+```{r, }
+library(ggplot2)
+meanBPS<-aggregate(Study3BPS~Study3SPoverall, Study3, mean)
+
+```
+
+***
+
+Bonus: plot the graph with SE **Study 3: Relationship between Minutes Using Smartphone\nand Mean Accuarcy on Boredom Proneness**
+```{r, echo=FALSE}
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+  library(plyr)
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) sum(!is.na(x))
+    else       length(x)}
+  datac <- ddply(data, groupvars, .drop=.drop,
+                 .fun = function(xx, col) {
+                   c(N    = length2(xx[[col]], na.rm=na.rm),
+                     mean = mean   (xx[[col]], na.rm=na.rm),
+                     sd   = sd     (xx[[col]], na.rm=na.rm)
+                   )}, measurevar)
+  datac <- rename(datac, c("mean" = measurevar))
+  datac$se <- datac$sd / sqrt(datac$N)  
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  return(datac)}
+```
+```{r}
+Study3$SP_Use<-as.factor(Study3$SP_Use)
+Study3$BPS<-as.numeric(Study3$BPS)
+meanBPSSE<- summarySE(Study3, measurevar = 'BPS', groupvars = 'SP_Use', na.rm=TRUE)
+meanBPSSE<-meanBPSSE[-c(4),]
+library(ggplot2)
+
+```
+
+***
