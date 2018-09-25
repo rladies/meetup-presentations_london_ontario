@@ -1,2 +1,1 @@
-# meetup-presentations_london_ontario
-R-Ladies London Ontario meetup presentations
+# Materials for the meet up presentations hosted by R-Ladies #LdnOnt (London, Ontario)
