@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Figuring out figures with ggplot</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Thea Knowles" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Figuring out figures with ggplot
+## An R-Ladies #LdnOnt presentation
+### Thea Knowles
+### 2018/10/25 (updated: 2018-10-25)
+
+---
+
+
+
+
+# Plan for today
+
+.pull-left[
+**1. Philosophy of data visualization**
+
+- Exploration vs. communication
+- What is this *ggplot* and why do I care?
+
+**2. Quick teaser of plotting possibilities**
+
+- Because why not
+
+**3. Workflow**
+
+- RProjects
+- Reading in data
+- Looking at data
+]
+
+.pull-right[
+**4. Making figures (finally!)**
+
+- Basic set up
+- Essential elements
+- Popular plots
+- Customization
+- Unneccessary but delicious extra customizations as time allows
+
+&lt;img src = "images/ggplot_examples.jpeg"&gt;
+
+]
+
+---
+# Get the data for today
+
+## https://goo.gl/S7LFHC
+
+---
+# Philosophy of data visualization
+
+## Exploration vs. Communication
+
+### Exploration:
+&lt;center&gt;
+&lt;iframe src="https://giphy.com/embed/l4KibOaou932EC7Dy" width="480" height="294" frameBorder="0" class="giphy-embed" allowFullScreen&gt;&lt;/iframe&gt;&lt;p&gt;&lt;a href="https://giphy.com/gifs/binoculars-l4KibOaou932EC7Dy"&gt;via GIPHY&lt;/a&gt;&lt;/p&gt;
+&lt;/center&gt;
+
+---
+# Philosophy of data visualization
+
+## Exploration vs. Communication
+
+### Communication
+
+&lt;center&gt;
+&lt;iframe src="https://giphy.com/embed/3o6Mb4y3SvguAcG3Ly" width="480" height="366" frameBorder="0" class="giphy-embed" allowFullScreen&gt;&lt;/iframe&gt;&lt;p&gt;&lt;a href="https://giphy.com/gifs/season-10-the-simpsons-10x22-3o6Mb4y3SvguAcG3Ly"&gt;via GIPHY&lt;/a&gt;&lt;/p&gt;
+&lt;/center&gt;
+
+---
+# Philosophy of data visualization
+## **gg**plot: **G**rammar of **G**raphics
+
+.pull-left[
+&lt;img src = "images/gigi.jpg" height=500&gt;
+]
+
+.pull-right[
+
+### Essential elements of the "grammar":
+- **Data**: Dataset to plot
+- **Aesthetics**: Scales on to which data is mapped
+- **Geometries**: visual elements used for the data
+]
+
+
+#### Goal of telling you all this:
+- **Conceptualization**
+- **Helpful terms to google** (mostly this)
+
+---
+class: middle
+
+# ggplot: Grammar of Graphics
+
+Plots are built up additively using *layers*. They usually look something like this:
+
+
+```r
+ggplot(my_data, aes(x = my_x, y = my_y, color = my_group))+
+     geom_someShape()+
+     do_some_stuff()+
+     do_other_stuff()
+```
+
+Each layer is added by a "+" sign
+---
+
+# Let's take a quick look at how this works
+
+Throughout today's workshop, we will use a modified version of the [Bike Sharing Dataset](https://www.kaggle.com/marklvl/bike-sharing-dataset#Bike-Sharing-Dataset.zip) from [Kaggle](https://www.kaggle.com/). This dataset logs how many bikes are rented on a daily basis using the bike share system in Washington, D.C.
+
+&lt;center&gt;
+&lt;img src = "images/bikeshare.jpg" height = 400&gt;
+&lt;/center&gt;
+
+
+
+
+---
+# Let's take a quick look at how this works
+
+## 1. Set up
+
+.pull-left[
+
+```r
+*ggplot(bikes)
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out1-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Let's take a quick look at how this works
+
+## 2. Specify *data* and *aesthetics*
+
+.pull-left[
+
+```r
+*ggplot(bikes, aes(x = temp, y = cnt))
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out2-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Let's take a quick look at how this works
+
+## 3. Specify the *geometry*
+
+.pull-left[
+
+```r
+ggplot(bikes, aes(x = temp, y = cnt)) +
+*      geom_point() 
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out3-1.png)&lt;!-- --&gt;
+]
+
+---
+# Let's take a quick look at how this works
+
+## 4. Specify *other stuff!*
+
+.pull-left[
+
+```r
+ggplot(bikes, aes(x = temp, y = cnt)) +
+     geom_point()+
+*     geom_smooth(method = "lm")
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out4-1.png)&lt;!-- --&gt;
+]
+
+
+---
+# Let's take a quick look at how this works
+
+## 5. Prettify!
+
+.pull-left[
+
+```r
+ggplot(bikes, aes(x = temp, y = cnt)) +
+*     geom_point(aes(color = season))+
+     geom_smooth(method = "lm")
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out5-1.png)&lt;!-- --&gt;
+]
+
+---
+# Let's take a quick look at how this works
+## 5. Prettify!
+
+.pull-left[
+
+```r
+ggplot(bikes, aes(x = temp, y = cnt)) +
+     geom_point(aes(color = season))+
+     geom_smooth(method = "lm")+
+*     theme_bw()
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out6-1.png)&lt;!-- --&gt;
+]
+
+---
+# Let's take a quick look at how this works
+## 5. Prettify!
+
+.pull-left[
+
+```r
+ggplot(bikes, aes(x = temp, y = cnt)) +
+     geom_point(aes(color = season))+
+     geom_smooth(method = "lm")+
+     theme_bw()+
+*     facet_wrap(~season, scales = "free")
+     # etc...
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-example-out7-1.png)&lt;!-- --&gt;
+]
+
+
+---
+# Workflow: R Projects
+
+---
+class: middle
+
+# Workflow: R Projects
+
+- [R Studio Projects](https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects) allow you to create *projects* in a given directory
+- Benefits: 
+     - Don't need to specify working directory
+     - Everything is nice and neatly contained
+     - Can open multiple projects at once (if you want)
+     - Picks up where you left off (tabs open, environment, etc.) when you reopen the project
+
+---
+class: middle
+
+# Exercise 1: R Projects
+
+### Make an R Project
+
+In the same directory as your .rproj file, you will include:
+- the data bikes.csv
+- a new .R script
+
+---
+class: center, middle
+
+# Exercise 1: R Projects
+
+### Make an R Project
+
+
+### Step 1:
+&lt;img src = "images/rproj1.png"&gt;
+
+---
+class: center, middle
+
+# Exercise 1: R Projects
+
+### Make an R Project
+
+
+### Step 2:
+&lt;img src = "images/rproj2.png"&gt;
+
+---
+class: center, middle
+
+# Exercise 1: R Projects
+
+### Make an R Project
+
+### Step 3:
+&lt;img src = "images/rproj3.png"&gt;
+
+---
+
+# Exercise 1: R Projects
+
+.pull-left[
+### Make an RProject
+
+In the same directory as your .rproj file, include:
+- the data bikes.csv
+- a new .R script entitled bikes.r
+]
+
+.pull-right[
+### Step 4:
+&lt;img src = "images/rproj4.png"&gt;
+]
+
+*For now*: don't worry about *Creating a git repository* unless you are already familiar and set up with git. Git is extremely lovely and helpful and seamlessly integrated into R Studio, but that will be for another time.
+
+---
+
+# Exercise 1: R Projects
+
+.pull-left[
+### Make an RProject
+
+In the same directory as your .rproj file, include:
+- **the data bikes.csv**
+     - Move the file to the directory you just created
+- **a new .R script entitled bikes.r**
+     - Open your new ggplot_workshop.rproj file and create a new R script and save it in the same directory as your project and data files.
+]
+
+.pull-right[
+### Step 5:
+&lt;img src = "images/rproj5.png"&gt;
+
+
+&lt;img src = "images/rproj6.png"&gt;
+]
+
+---
+
+# Workflow
+## Loading and exploring data
+
+---
+# Excercise 2: Loading data
+
+.pull-left[
+**Option 1: Load in your data via the `Import dataset` option from the menu**
+
+&lt;img src = "images/importdata.png"&gt;
+
+**Note**: the code used to execute this *will* appear in the console; you can also copy this code to your script for later (but keep in mind you don't actually *need* to specify the directory if you are using Projects)
+
+]
+
+--
+
+.pull-right[
+**Option 2. Load in your data in your script**
+ 
+- This is (IMO) a better option because it makes it easy to do this everytime you open up the script (so, fewer things for you to click!)
+
+In your new script, include the following lines:
+
+```
+# Read in your data
+bikes &lt;- read.csv("bikes_new.csv")
+```
+
+Anything preceded by `#` will be a *comment*, i.e., R will not try to run it (notes to self, etc.)
+]
+
+---
+
+# Excercise 3: Exploring data
+
+Let's see what each of these commands does...
+
+```
+View(bikes)
+str(bikes)
+summary(bikes)
+head(bikes)
+tail(bikes)
+```
+
+---
+# Excercise 3: Exploring data
+
+**Let's see what each of these commands does...**
+
+.pull-left[
+
+```r
+*View(bikes)
+str(bikes)
+summary(bikes)
+head(bikes)
+tail(bikes)
+```
+]
+
+.pull-right[
+- Allows you to look at your data in the Source pane
+- Looks and feels like Excel
+]
+
+---
+# Excercise 3: Exploring data
+
+**Let's see what each of these commands does...**
+
+.pull-left[
+
+```r
+View(bikes)
+*str(bikes)
+summary(bikes)
+head(bikes)
+tail(bikes)
+```
+]
+
+.pull-right[
+
+- Gives you a breakdown of each variable (column):
+     - Name, type of variable, data points (rows)
+]
+
+
+```
+## 'data.frame':	1462 obs. of  17 variables:
+##  $ X         : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ instant   : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ dteday    : Factor w/ 731 levels "2011-01-01","2011-01-02",..: 1 2 3 4 5 6 7 8 9 10 ...
+##  $ season    : Factor w/ 4 levels "fall","spring",..: 4 4 4 4 4 4 4 4 4 4 ...
+##  $ yr        : int  0 0 0 0 0 0 0 0 0 0 ...
+##  $ mnth      : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ holiday   : int  0 0 0 0 0 0 0 0 0 0 ...
+##  $ weekday   : Factor w/ 7 levels "Fri","Mon","Sat",..: 3 4 2 6 7 5 1 3 4 2 ...
+##  $ workingday: int  0 0 1 1 1 1 1 0 0 1 ...
+##  $ weathersit: int  2 2 1 1 1 1 2 2 1 1 ...
+##  $ temp      : num  0.344 0.363 0.196 0.2 0.227 ...
+##  $ atemp     : num  0.364 0.354 0.189 0.212 0.229 ...
+##  $ hum       : num  0.806 0.696 0.437 0.59 0.437 ...
+##  $ windspeed : num  0.16 0.249 0.248 0.16 0.187 ...
+##  $ count     : int  331 131 120 108 82 88 148 68 54 41 ...
+##  $ cnt       : int  985 801 1349 1562 1600 1606 1510 959 822 1321 ...
+##  $ type      : Factor w/ 2 levels "casual","registered": 1 1 1 1 1 1 1 1 1 1 ...
+```
+
+---
+
+# Excercise 3: Exploring data
+
+**Let's see what each of these commands does...**
+
+.pull-left[
+
+```r
+View(bikes)
+str(bikes)
+*summary(bikes)
+head(bikes)
+tail(bikes)
+```
+]
+
+.pull-right[
+
+- Gives you a summary of each variable:
+     - **If numeric**: summary statistics (min/max, quartiles, mean)
+     - **If factor**: levels of factors and n of observations in each level
+]
+
+
+```
+##        X             instant             dteday        season   
+##  Min.   :   1.0   Min.   :  1.0   2011-01-01:   2   fall  :356  
+##  1st Qu.: 366.2   1st Qu.:183.2   2011-01-02:   2   spring:368  
+##  Median : 731.5   Median :366.0   2011-01-03:   2   summer:376  
+##  Mean   : 731.5   Mean   :366.0   2011-01-04:   2   winter:362  
+##  3rd Qu.:1096.8   3rd Qu.:548.8   2011-01-05:   2               
+##  Max.   :1462.0   Max.   :731.0   2011-01-06:   2               
+##                                   (Other)   :1450               
+##        yr              mnth          holiday        weekday   
+##  Min.   :0.0000   Min.   : 1.00   Min.   :0.00000   Fri :208  
+##  1st Qu.:0.0000   1st Qu.: 4.00   1st Qu.:0.00000   Mon :210  
+##  Median :1.0000   Median : 7.00   Median :0.00000   Sat :210  
+##  Mean   :0.5007   Mean   : 6.52   Mean   :0.02873   Sun :210  
+##  3rd Qu.:1.0000   3rd Qu.:10.00   3rd Qu.:0.00000   Thu :208  
+##  Max.   :1.0000   Max.   :12.00   Max.   :1.00000   Tues:208  
+##                                                     Wed :208  
+##    workingday      weathersit         temp             atemp        
+##  Min.   :0.000   Min.   :1.000   Min.   :0.05913   Min.   :0.07907  
+##  1st Qu.:0.000   1st Qu.:1.000   1st Qu.:0.33688   1st Qu.:0.33779  
+##  Median :1.000   Median :1.000   Median :0.49833   Median :0.48673  
+##  Mean   :0.684   Mean   :1.395   Mean   :0.49538   Mean   :0.47435  
+##  3rd Qu.:1.000   3rd Qu.:2.000   3rd Qu.:0.65562   3rd Qu.:0.60892  
+##  Max.   :1.000   Max.   :3.000   Max.   :0.86167   Max.   :0.84090  
+##                                                                     
+##       hum           windspeed           count             cnt      
+##  Min.   :0.0000   Min.   :0.02239   Min.   :   2.0   Min.   :  22  
+##  1st Qu.:0.5200   1st Qu.:0.13495   1st Qu.: 690.2   1st Qu.:3146  
+##  Median :0.6267   Median :0.18097   Median :1628.0   Median :4548  
+##  Mean   :0.6279   Mean   :0.19049   Mean   :2252.2   Mean   :4504  
+##  3rd Qu.:0.7303   3rd Qu.:0.23322   3rd Qu.:3661.0   3rd Qu.:5966  
+##  Max.   :0.9725   Max.   :0.50746   Max.   :6946.0   Max.   :8714  
+##                                                                    
+##          type    
+##  casual    :731  
+##  registered:731  
+##                  
+##                  
+##                  
+##                  
+## 
+```
+
+---
+# Excercise 3: Exploring data
+
+**Let's see what each of these commands does...**
+
+.pull-left[
+
+```r
+View(bikes)
+str(bikes)
+summary(bikes)
+*head(bikes)
+*tail(bikes)
+```
+]
+
+.pull-right[
+
+- Shows you the first (head) or last (tail) 6 rows of your data
+- **Note:** You can specify more or less than 6 rows (the default) like this: `head(bikes, 10)`
+]
+
+
+```
+##   X instant     dteday season yr mnth holiday weekday workingday
+## 1 1       1 2011-01-01 winter  0    1       0     Sat          0
+## 2 2       2 2011-01-02 winter  0    1       0     Sun          0
+## 3 3       3 2011-01-03 winter  0    1       0     Mon          1
+## 4 4       4 2011-01-04 winter  0    1       0    Tues          1
+## 5 5       5 2011-01-05 winter  0    1       0     Wed          1
+## 6 6       6 2011-01-06 winter  0    1       0     Thu          1
+##   weathersit     temp    atemp      hum windspeed count  cnt   type
+## 1          2 0.344167 0.363625 0.805833 0.1604460   331  985 casual
+## 2          2 0.363478 0.353739 0.696087 0.2485390   131  801 casual
+## 3          1 0.196364 0.189405 0.437273 0.2483090   120 1349 casual
+## 4          1 0.200000 0.212122 0.590435 0.1602960   108 1562 casual
+## 5          1 0.226957 0.229270 0.436957 0.1869000    82 1600 casual
+## 6          1 0.204348 0.233209 0.518261 0.0895652    88 1606 casual
+```
+
+---
+class: middle
+
+# A quick note on tidy data
+
+- We won't get into multiple data formats today, but in general, "tidy data" is easy to work with for plotting (and everything else).
+- **Tidy data** means that each row is a *single observation* and each column is a *single variable*
+
+---
+#LET'S PLOT SOME STUFF!
+
+&lt;center&gt;
+&lt;iframe src="https://giphy.com/embed/AGOPaltgJ2pBC" width="402" height="480" frameBorder="0" class="giphy-embed" allowFullScreen&gt;&lt;/iframe&gt;&lt;p&gt;&lt;a href="https://giphy.com/gifs/thumbs-up-michelle-obama-cool-story-bro-AGOPaltgJ2pBC"&gt;via GIPHY&lt;/a&gt;&lt;/p&gt;
+&lt;/center&gt;
+
+---
+class: middle
+
+# Setting up a plot
+## Load libraries
+
+- In your ggplot_workshop.R script, add a line to the top to load in the libraries we will need to make our figures
+
+```
+library(ggplot2)
+```
+
+- You may need to install ggplot2 first. If you get an error saying *there is no package called 'ggplot2'*, run the following in your console first:
+
+```
+install.packages("ggplot2")
+```
+---
+class: middle
+
+# Plotting essentials
+We will now iteratively build a figure together in ggplot
+
+### Recall:
+
+```r
+ggplot(my_data, 
+       aes(x = my_x,
+           y = my_y, 
+           color = my_group))+
+     geom_someShape()+
+     do_some_stuff()+
+     do_other_stuff()
+```
+
+---
+# Plotting essentials
+
+.pull-left[
+## Setting up...
+
+
+```r
+*ggplot(bikes)
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-setup-1-out-1.png)&lt;!-- --&gt;
+]
+
+---
+# Plotting essentials: Aesthetics
+
+
+.pull-left[
+
+```r
+*ggplot(bikes) + 
+*         aes(x = temp, 
+*             y = count)
+```
+
+- Recall from when we were exploring our data...      
+     - `count`: number of bikes rented/day
+     - `temp`: the temperature (F) that day
+- We will now map those variables to our **aesthetics**
+- Note what changes: there are no data yet because we haven't specified *how* those data will appear (that's the **geometry**)
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-setup-2-out-1.png)&lt;!-- --&gt;
+
+- Note the **+** at the end of the first line now - we are adding a new *layer*
+]
+
+---
+# Plotting essentials: Geometry
+
+.pull-left[
+
+```r
+ggplot(bikes) +
+       aes(x = temp, 
+           y = count) +
+*     geom_point()
+```
+
+- We will now specify the **geometry** of our plot, i.e., how we want the data to be represented
+- We will plot our data as points for now
+- We'll look at more geometries soon (called *geoms* and specified as `geom_type()`)
+
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-setup-3-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Exploring other aesthetics
+
+- Now that we've got a basic plot, we may wish to add other informative attributes to it.
+- For example, we could map another variable to an aesthetic like `color`, `size`, `alpha`, etc...
+
+
+&lt;center&gt;
+&lt;img src = "images/aesthetics.png"&gt;
+&lt;/center&gt;
+
+See a comprehensive explanation of ggplot aesthetic specifications [here.](https://ggplot2.tidyverse.org/articles/ggplot2-specs.html)
+---
+
+# Exploring other aesthetics
+
+- Now that we've got a basic plot, we may wish to add other informative attributes to it.
+- For example, we could map another variable to an aesthetic like `color`, `size`, `alpha`, etc...
+- Aesthetics like `color`, `size` (in general) get added to the main `ggplot()` function like this:
+
+
+```r
+ggplot(bikes)+ 
+       aes(x = temp, 
+           y = count, 
+*           color = season, 
+*           size = holiday) +
+     geom_point()
+```
+
+In the above example, we have mapped:
+
+- `color` to the `season` variable (categorical variable with levels "fall", "winter", "summer", "spring")
+- `size` to the `holiday` variable (categorical variable with levels 0 or 1, denoting whether that day was a holiday or not)
+
+---
+# Exploring other aesthetics
+.pull-left[
+
+
+```r
+ggplot(bikes, 
+       aes(x = temp, 
+           y = count, 
+*           color = season)) +
+     geom_point()
+```
+
+- Notice: within the `aes()` function, we are not adding *layers*; new aesthetics within the ( ) are just added by commas. This is still part of the basic `ggplot()` function
+]
+
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-setup-4-out-1.png)&lt;!-- --&gt;
+
+]
+--
+**Exercise 4**: Adding aesthetics
+
+Try modifying the current plot by mapping `alpha` (transparency) to `windspeed`
+
+---
+
+# Exercise 4: Adding aesthetics
+
+Try modifying the current plot by mapping `alpha` (transparency) to `windspeed`
+
+
+```r
+ggplot(bikes, 
+       aes(x = temp, 
+           y = count, 
+           color = season)) +
+     geom_point()
+```
+
+---
+# Exercise 4: Adding aesthetics
+
+Try modifying the current plot by mapping `alpha` (transparency) to `windspeed`
+
+.pull-left[
+
+```r
+ggplot(bikes, 
+       aes(x = temp, 
+           y = count, 
+           color = season,
+*           alpha = windspeed)) +
+     geom_point()
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/plot-ex5-out-1.png)&lt;!-- --&gt;
+]
+---
+class: middle
+
+# More customization of aesthetics
+## Setting colours
+
+- ggplot default colors are nice and pretty. BUT what if you want to define your own color scheme?
+
+&gt; A new layer: `scale_color_manual()`
+
+- See also: `scale_color_continuous`, `scale_color_discrete`, and many more...
+
+---
+class: middle
+
+# More customization of aesthetics
+## Setting colors
+
+### Name the colors
+`scale_color_manual(values=c("red", "blue", "yellow", "green"))`
+
+### Reference the [color hex codes](https://www.color-hex.com/)
+
+`scale_color_manual(values=c("#d80e0e", "#1f0ed8",  "#ecee1e", "#11cc3a"))`
+
+or
+
+`my_colors &lt;- c("#d80e0e", "#1f0ed8",  "#ecee1e", "#11cc3a")`
+`scale_color_manual(values = my_colors)`
+
+#### Use a predefined palate
+
+`scale_color_brewer(palette="Set1")`
+
+```
+library(wesanderson)
+
+plot + scale_color_manual(values = wes_palette(n = 4, name="Moonrise3"))`
+```
+
+
+
+---
+class: middle
+# More customization of aesthetics
+
+- Note that we have mapped aesthetics to variables in these examples. You could also set aesthetics as static *attributes* (i.e., set the color of all points to *red* instead of to a variable).
+
+- We have just looked at one tiny aspect of aesthetic changes. Check out the [ggplot documentation](https://ggplot2.tidyverse.org/articles/ggplot2-specs.html) for more. 
+
+- Now we'll move on down from **aesthetics** to **geometries**
+---
+
+# Exploring geometries
+
+- **Geometries**: How your data are represented, i.e., the *type* of plot (scatter, bar, line, etc.)
+
+- The geometry you choose is important and should reflect the structure of the relationships in your data you want to show.
+
+- There are [**lots**](https://ggplot2.tidyverse.org/reference/#section-layer-geoms). Here are some commonly used examples. We will walk through some of these. 
+
+     - geom_point()
+     - geom_line()
+     - geom_bar()
+     - geom_violin()
+     - geom_boxplot()
+     - geom_density()
+     - geom_smooth()
+     - geom_ridgeline()
+
+---
+
+# Geometries: Continuous x, y
+.pull-left[
+
+```r
+p &lt;- ggplot(bikes) +
+       aes(x = temp, 
+           y = count)
+
+p + 
+*     geom_point()
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/point-out-1.png)&lt;!-- --&gt;
+]
+
+---
+# Geometries: Continuous x, y
+
+.pull-left[
+```
+p + 
+     {{geom_smooth()}}
+```
+]
+
+.pull-right[
+
+```
+## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+```
+
+![](ggplot_workshop_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+]
+
+---
+# Geometries: Continuous x, y
+
+**Combining geoms!**
+
+.pull-left[
+
+```r
+p + 
+*     geom_point() +
+*     geom_smooth()
+```
+]
+.pull-right[
+
+```
+## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+```
+
+![](ggplot_workshop_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+]
+
+---
+# Geometries: Categorical x, continuous y
+
+.pull-left[
+
+```r
+p &lt;- ggplot(bikes) +
+     aes(x = season,
+         y = count)
+
+p + 
+*     geom_boxplot()
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+]
+---
+# Geometries: Categorical x, continuous y
+
+.pull-left[
+```
+p + {{geom_violin()}}
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+]
+---
+# Geometries: Categorical x, continuous y
+
+.pull-left[
+**Combining geoms!**
+
+```r
+p + 
+*     geom_violin() +
+*     geom_jitter(alpha = 0.25)
+```
+
+- `geom_jitter()` is basically `geom_point()` but the points get scattered (er, jittered) around to make them more visible
+- here we have also specified the `alpha` aesthetic as a constant *attribute* within the geom.
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+]
+
+---
+# Geometries: Histograms and density plots
+
+.pull-left[
+
+```r
+p &lt;- ggplot(bikes) +
+     aes(x = temp)
+
+p + 
+*     geom_histogram()
+```
+]
+
+.pull-right[
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](ggplot_workshop_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+]
+---
+
+# Geometries: Histograms and density plots
+
+.pull-left[
+
+```r
+p + 
+*     geom_freqpoly()
+```
+]
+
+.pull-right[
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](ggplot_workshop_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Geometries: Histograms and density plots
+
+.pull-left[
+
+```r
+p + 
+*     geom_density()
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/density-plot-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+
+# Geometries: Histograms and density plots
+
+.pull-left[
+
+```r
+p &lt;- ggplot(bikes) +
+     aes(x = temp,
+*         fill = season,
+*         alpha = 0.25)
+p + geom_density()
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/unnamed-chunk-27-1.png)&lt;!-- --&gt;
+]
+
+- What would happen if we specified `color` instead of `fill` for this geom?
+---
+# Geometries: Continuous x, categorical y
+
+.pull-left[
+
+```r
+#install.packages("ggridges")
+library(ggridges)
+p &lt;- ggplot(bikes)+ 
+     aes(x = temp, 
+         y = season)
+
+p + geom_density_ridges()
+```
+]
+
+.pull-right[
+
+```
+## Picking joint bandwidth of 0.0273
+```
+
+![](ggplot_workshop_files/figure-html/joyplot-out-1.png)&lt;!-- --&gt;
+
+]
+
+
+---
+# Summary plots
+
+
+.pull-left[
+We just saw plots of the raw data, but often we need to plot summary figures. To do that, we have to first manipulate our data
+
+
+```r
+bikes$season &lt;- factor(bikes$season, levels = c("winter", "spring", "summer", "fall"))
+
+bikes_summary &lt;- bikes %&gt;%
+     ddply(.(season, type), 
+           summarise, 
+           count = mean(count))
+```
+]
+
+.pull-right[
+
+```r
+bikes_summary
+```
+
+```
+##   season       type     count
+## 1 winter     casual  334.9282
+## 2 winter registered 2269.2044
+## 3 spring     casual 1106.0978
+## 4 spring registered 3886.2337
+## 5 summer     casual 1202.6117
+## 6 summer registered 4441.6915
+## 7   fall     casual  729.1124
+## 8   fall registered 3999.0506
+```
+
+]
+
+---
+# Summary plots
+
+.pull-left[
+Now with our summarized data (`bikes_summary`)...
+
+
+```r
+ggplot(bikes_summary) +
+     aes(x=season, y = count) +
+     geom_bar(stat = "identity")
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/bar-out-1.png)&lt;!-- --&gt;
+
+]
+---
+# Summary plots
+
+.pull-left[
+Now with our summarized data (`bikes_summary`)...
+
+
+```r
+ggplot(bikes_summary) +
+     aes(x=season, y = count, fill = type) +
+     geom_bar(stat = "identity")
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/bar-fill-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Summary plots
+
+.pull-left[
+Now with our summarized data (`bikes_summary`)...
+
+
+```r
+ggplot(bikes_summary) +
+     aes(x=season, y = count, color = type) +
+     geom_point()+
+*     geom_line(aes(group = type))
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/line-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Facets
+
+- In addition to aesthetics, another way to distinguish different elements of our data is to separate them in panels.
+- **Facets** allow us to do that.
+
+.pull-left[
+Now with our summarized data (`bikes_summary`)...
+
+
+```r
+ggplot(bikes_summary) +
+     aes(x=season, y = count, fill = type) +
+     geom_bar(stat = "identity") +
+*     facet_wrap(~type)
+```
+
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/bar-fill-facet-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Facets
+
+- In addition to aesthetics, another way to distinguish different elements of our data is to separate them in panels.
+- **Facets** allow us to do that.
+
+.pull-left[
+Now with our summarized data (`bikes_summary`)...
+
+
+```r
+ggplot(bikes_summary) +
+     aes(x=season, y = count, fill = type) +
+     geom_bar(stat = "identity") +
+*     facet_grid(season~type, scales = "free")
+```
+
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/bar-fill-facet2-out-1.png)&lt;!-- --&gt;
+
+]
+
+
+---
+# Prettifying your plot: Theme
+## I.e., fonts and labels and backgrounds, oh my!
+
+
+---
+# Labels
+
+.pull-left[
+
+```r
+p +
+*     labs(title = "Number of bikes rented per season",
+*          x = "Season",
+*          y = "Number of bikes rented",
+*          fill = "Type of bike rental")
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/labs-example-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Exploring theme options
+
+- Another important layer is the [`theme()`](https://ggplot2.tidyverse.org/reference/theme.html) layer, which allows you to control all non-data components of your plot.
+
+&gt; **Full disclosure:** 
+- I always forget the syntax for the different elements of theme and look them up FREQUENTLY.
+- I also keep an RMarkdown file called n00b.rmd that contains snippets of code I find myself looking up all the time, as a kind of *recipe-book* for myself
+
+---
+# Exploring theme options
+
+- Helper functions are sometimes used to specify theme options. These begin with `element_`:
+     - E.g., `element_text()` supports theme options to modify the text
+
+- An example syntax: 
+
+`theme(text.to.change = element_text(font = "font", size = 12, etc...))`
+
+--
+
+- You can set theme options on a plot-by-plot basis OR you can define custom themes with `theme_set()`
+     - This is beyond the scope of today
+
+--
+**ALSO!**
+
+- Check out [ggplotThemeAssist](https://github.com/calligross/ggthemeassist) and [ggedit](https://github.com/metrumresearchgroup/ggedit)
+- I have never used these but they look super handy
+
+
+
+---
+# Theme options: Some examples
+
+.pull-left[
+
+```r
+p + 
+*     theme(axis.title = element_text(size=18),
+*           axis.text.x = element_text(size=12),
+*           legend.title = element_text(size=12),
+*           legend.position = "bottom")
+```
+]
+
+.pull-right[
+![](ggplot_workshop_files/figure-html/theme-examples-out-1.png)&lt;!-- --&gt;
+
+]
+
+---
+# Saving!
+
+.pull-left[
+## Option 1:
+
+&lt;img src = "images/exportplot.png"&gt;
+]
+
+--
+.pull-right[
+## Option 2: [ggsave](https://ggplot2.tidyverse.org/reference/ggsave.html)
+
+
+
+```r
+my_plot &lt;- ggplot(bikes_summary) +
+     aes(x = season, 
+         y = count, 
+         fill = type) +
+     geom_bar(stat = "identity")
+
+ggsave("my_plot.png", width = 4)
+```
+
+- You do not need to specify the directory if you are using R Projects
+- You could specify a relative directory (e.g., images/...)
+]
+
+---
+# Extra fun stuff
+
+### Random
+- [accidental aRt:](https://twitter.com/accidental__art?lang=en) Dataviz gone beautifully wrong
+- [data art](https://www.r-graph-gallery.com/portfolio/data-art/)
+- [gganimate]()
+
+### Colours
+- [paletter package](http://djnavarro.net/post/2018-06-14-paletter/)
+- [colorbrewer](http://colorbrewer2.org/#type=sequential&amp;scheme=BuGn&amp;n=3)
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
