@@ -15,7 +15,7 @@ class: center, middle, inverse, title-slide
 # Figuring out figures with ggplot
 ## An R-Ladies #LdnOnt presentation
 ### Thea Knowles
-### 2018/10/25 (updated: 2018-10-25)
+### 2018/10/25 (updated: 2018-11-07)
 
 ---
 
@@ -129,6 +129,31 @@ Throughout today's workshop, we will use a modified version of the [Bike Sharing
 
 
 
+```
+## ── Attaching packages ───────── tidyverse 1.2.1 ──
+```
+
+```
+## ✔ tibble  1.4.2     ✔ purrr   0.2.5
+## ✔ tidyr   0.8.1     ✔ dplyr   0.7.6
+## ✔ readr   1.1.1     ✔ stringr 1.3.1
+## ✔ tibble  1.4.2     ✔ forcats 0.3.0
+```
+
+```
+## ── Conflicts ──────────── tidyverse_conflicts() ──
+## ✖ dplyr::arrange()   masks plyr::arrange()
+## ✖ purrr::compact()   masks plyr::compact()
+## ✖ dplyr::count()     masks plyr::count()
+## ✖ dplyr::failwith()  masks plyr::failwith()
+## ✖ dplyr::filter()    masks stats::filter()
+## ✖ dplyr::id()        masks plyr::id()
+## ✖ dplyr::lag()       masks stats::lag()
+## ✖ dplyr::mutate()    masks plyr::mutate()
+## ✖ dplyr::rename()    masks plyr::rename()
+## ✖ dplyr::summarise() masks plyr::summarise()
+## ✖ dplyr::summarize() masks plyr::summarize()
+```
 
 ---
 # Let's take a quick look at how this works
@@ -1065,6 +1090,17 @@ p + geom_density_ridges()
 ]
 
 .pull-right[
+
+```
+## 
+## Attaching package: 'ggridges'
+```
+
+```
+## The following object is masked from 'package:ggplot2':
+## 
+##     scale_discrete_manual
+```
 
 ```
 ## Picking joint bandwidth of 0.0273
