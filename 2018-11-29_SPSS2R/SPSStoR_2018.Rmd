@@ -1,0 +1,772 @@
+---
+title: "Transitioning from SPSS to R - R-Ladies London"
+author: "Daryn Cushnie-Sparrow"
+date: "November 29, 2018"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, tidy = TRUE, error = FALSE, message = FALSE, warning = FALSE, collapse = TRUE)
+options(scipen = 10, digits = 5)
+```
+
+## Introduction
+
+For many of us, SPSS has been something we've used for statistical analysis since early in our experience with statistics. Running tests in SPSS might be second-nature to you, and there are lots of resources online for how to do things you may be unclear about. The comfort of SPSS can make it daunting to explore other options; however, SPSS has limitations, and you may have stumbled upon an interesting statistical test that can be run in R and not in SPSS. Alternatively, you may have decided that SPSS licenses are very expensive and inconvenient, and you're interested in other options. I have gradually been transitioning from SPSS to R, so I'm hoping to share some of what I've learned that might ease your transition. 
+
+In my opinion, the biggest shift one makes in the move from SPSS to R is a change in how you think about your data and your analysis. If you are used to using the SPSS to GUI and clicky navigation to move around and explore your data, you'll notice that won't be as possible0 in R. Once you get over this hurdle, the flexibility and power of R is sure to win you over! 
+
+### Packages
+
+SPSS is a one-piece statistical package. All the functionalities and features available to you are included in the installation. R has many useful base functions, but there are tons of **packages** available from CRAN that allow you to do more things or do them better. To install a package from CRAN, use the function `install.packages`: for example, `install.packages("ggplot2")`. In order to use packages, you need to **load** them into R, which makes their functionalities available. Do this using `library`. Here are the packages we'll be using today.
+
+```{r Libraries}
+library(psych)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(car)
+library(Hmisc)
+library(moments)
+library(flextable)
+library(broom)
+select <- dplyr::select
+summarize <- dplyr::summarize
+path <- getwd()
+```
+
+### R Basics
+
+In R, a single 'line' of data is called a vector - a row or column could be a vector. The most common higher dimensions of data you'll use are matrices (if they're all one variable type eg. numeric), lists (bundles of different kinds of information) or data.frames (like the spreadsheets you'd use in Excel or SPSS). These 3 simple base R functions are some of your best friends - you will use them often! Especially `c()` (combine) - you'll use this on its own and within functions. To assign a piece of information to a name (eg. to make a vector named "item1"), use the <- operator with the Label on the left and the Contents on the right (by convention). <- and = are not the same thing in R!
+
+```{r basics}
+# makes a vector
+item1 <- c(1, 2, 3, 5)
+item2 <- c(3, 6, 7, 2)
+
+# binds these by column - ie. these are variable vectors
+cbind(item1, item2)
+
+# binds these by row - ie. these are observation vectors
+rbind(item1, item2)
+```
+
+## Setting Up Your Data
+
+We're going to be using one of the default datasets available in R through **ggplot2**, `diamonds`. We'll start by loading in that data. You would *usually* need to import your own data. You can do this using `read_csv` from **readr** (e.g. `my_data <- read_csv(/myfolder/my_data.csv)`). A helpful tip is to use `path <- getwd()` at the beginning of your .R or .Rmd - this saves your current path. As long as you keep your .R or .Rmd in the same place as the files you're looking for, you can easily input the path of a file at anytime using `file.path(path, "filename.csv")`. 
+
+```{r load-in}
+data(diamonds)
+diamonds
+```
+
+If you'd like to look a the data in R Studio's GUI, you can do this by typing `View(diamonds)` into the console. Coming from SPSS, this is probably the view of your data that you're familiar with. In R, there are also other ways to explore the data. 
+
+### Navigating Your Data in R
+
+`str` is a useful base R function that gives an overview of your data, including the number of observations and variables, the classes of your data frame (more on this later), and previews the data by showing you each variable (and its class) and the first few observations. `glimpse` is a similar function from **dplyr** - the major difference here is it just shows the data a bit more cleanly (shows exactly as many observations as will fit in your current window size). `head` previews the first 6 rows of your data, and `tail` previews the last 6 rows. You can also customize the number of rows to display: e.g. `head(diamonds, 10)`. `names` will output the names of your columns, which are usually your variables. 
+
+```{r data exploration}
+str(diamonds)
+head(diamonds)
+tail(diamonds)
+names(diamonds)
+glimpse(diamonds)
+```
+
+There are also multiple ways to call specific rows (observations) and columns (variables). You can call row/column indices in square brackets (e.g. `dataframe[row,column]`) or using a `$` and the variable name (`dataframe$variable`). You always need to tell R where to find a particular variable or observation. I've wrapped these all in `head` for convenience, because 54,000 is a lot of diamonds! 
+
+```{r indexing}
+# 7th column (variable)
+head(diamonds[,7])
+
+# Also the 7th column - defaults to column if there's no comma!
+head(diamonds[7])
+
+# 7th row (observation)
+head(diamonds[7,])
+
+# Value of the 3rd variable for the 50th observation
+head(diamonds[50, 3])
+
+# List of all the price values
+head(diamonds$price)
+```
+
+**dplyr** also gives us great tools for selecting particular rows and variables. 
+
+```{r quick dplyr}
+# Grab the first 20 rows of diamonds for convenience
+short_diamonds <- diamonds[1:20,]
+
+# Select only the physical dimensions
+short_diamonds %>% select(x, y, z)
+
+# Select everything but the physical dimensions
+short_diamonds %>% select(carat:price)
+
+## OR
+short_diamonds %>% select(-x, -y, -z)
+
+# Filter to get only observations with a Premium cut
+short_diamonds %>% filter(cut == "Premium")
+
+# Combine filter and select to see only the physical dimensions
+# of the observations with a Premium cut
+short_diamonds %>% filter(cut == "Premium") %>%
+  select(-(carat:price))
+
+# Make sure you do this in the right order!
+# The following would throw an error because you've already
+# selected out 'cut' by the time you asked filter to use it!
+
+# short_diamonds %>% select(-(carat:price)) %>%
+#   filter(cut == "Premium")
+```
+
+-----
+
+##### Exercise 1: Indexing
+
+Can you find 2 different ways to find the price of the 10,000th diamond?
+
+```{r exercise1, include = FALSE}
+
+diamonds$price[10000]
+diamonds[10000,7]
+diamonds[10000,] %>% select(price)
+
+which(names(diamonds)=="price")
+
+```
+
+-----
+
+You might also want to sort the rows of your table based on the values of particular variables. You can do this with `arrange` and `desc` from **dplyr**. Sorting by an ordinal factor will sort in order of the levels of the variable. Other variables will sort in alphanumeric order. 
+
+```{r arrange}
+# Ascending
+short_diamonds %>% arrange(cut)
+
+# Descending
+short_diamonds %>% arrange(desc(cut))
+
+# Custom Order
+short_diamonds %>%
+  arrange(match(cut, c("Premium", "Ideal", "Very Good", "Fair", "Good")))
+```
+
+Looks great... but what is this data trying to show us? If we want to find out what this dataset contains, we can look up the documentation by typing `??diamonds` into the console. In the documentation, we find that `diamonds` is a dataset containing prices and attributes of almost 54,000 diamonds. The variables are:
+
+* price: price in US dollars
+* carat: weight of the diamond
+* cut: quality of the cut
+* colour: diamond colour (J being the worst, D being the best)
+* clarity:ranging from I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best)
+* physical dimensions in mm: x (length), y (width), z (depth)
+* depth: depth percentage calculated based on physical dimensions
+* table: width of top of the diamond relative to the widest point (flat part at the top)
+
+Because **ggplot2** gave us this data out of the goodness of its heart, it's very neat! All the variables already have their appropriate *classes* - and we also saw this when we called `str`. You can check a particular variable by calling `class`. Also, we don't see in my variable summary what the levels of `cut` are. We can check this by calling `levels`.  
+
+```{r cut_explore}
+class(diamonds$cut)
+levels(diamonds$cut)
+```
+
+We see that `cut` is an ordered factor, and we know based on our knowledge of the data that diamond cut is an ordinal variable, so this is what we expect. The levels of the data seem correct, with no obvious errors, and they appear to go in a logical order. 
+
+### Intro to Wrangling
+
+When you are loading in your own data, it rarely will be so neat! It's important that all variables are classed correctly in order for appropriate calculation and visualization down the line. In SPSS, you would make these kinds of changes in Variable View. In order to play in parallel between R and SPSS today, I'm going to start by outputting our `diamonds` data to a .csv.  
+
+```{r writing_csv}
+write_csv(diamonds, file.path(path, "diamonds.csv"))
+```
+
+When I import this into SPSS straight from the .csv, here's what I get: 
+
+[![](1_variableview.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+We know that all our categorical variables are ordinal in this dataset, so we change those by clicking in the Measure column. 
+
+[![](2_variableview_ordinal.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+You'll notice the Values column is empty - this is important because some tests in SPSS will not allow variables with strings, so you need to set up key-value pairs. For example, for cut, you could assign a number of 1 to Fair, 2 to Good, etc. You can do this manually in SPSS - but R can help us out! We'll come back to this.  
+
+When you first import data into R, variables tend to be chr - character (string) if they have **any** letters, or num, int, or dbl (numerical, integer, or double) if they are all numbers. You will need to change your variables' classes to fit what you know them to be. Categorical variables in R are called **factors**, and these can be unordered (nominal) or ordered (ordinal). 
+
+In this block of code, I'm going to create a messy version of `diamonds` so we can practice cleaning it up. If you're looking at the .Rmd, no peeking! It'll give away how you fix it. 
+
+```{r messy_diamonds, include = FALSE, eval = TRUE}
+messy_diamonds <- diamonds
+messy_diamonds[90, 5] <- "a"
+messy_diamonds$color <- as.character(messy_diamonds$color)
+messy_diamonds$price <- factor(messy_diamonds$price)
+```
+
+Take a look at `messy_diamonds` with `str`. What's wrong with it? 
+
+* depth is a character vector, but should be numeric
+* color is a character vector, but should be an ordered factor
+* price is factored, but it should be integer
+
+```{r cleaning up}
+## DEPTH
+# Try putting depth back to numeric by coercing it with as.numeric
+head(as.numeric(messy_diamonds$depth))
+
+# The warning 'NAs introduced by coercion' indicates that there's a 
+# non numerical value somewhere - let's find it to understand 
+# what's wrong before we erase it!
+# I'm asking R to tell me which value is NA when I coerced it
+which(is.na(as.numeric(messy_diamonds$depth)))
+
+# Let's look at what the depth of diamond #90 is
+messy_diamonds[90,5]
+messy_diamonds$depth[90]
+
+# Oops! Looks like a data-entry error. If we had another place the data
+# was entered (such as an original output document or paper questionnaire), 
+# we could check it and assign the correct value. 
+# I'm going to cheat and use the original diamonds to find out!
+diamonds[90,5]
+
+# Originally, this value was 62.9 - we'll go ahead and assign that now.
+messy_diamonds[90,5] <- 62.9
+
+# If you didn't have a way to check the original value, you probably
+# have to leave it as a missing value. R will automatically 
+# turn this character into a NA - which is what the warning was telling us.
+
+# Let's go ahead and coerce depth to numeric now that we've checked it.
+messy_diamonds$depth <- as.numeric(messy_diamonds$depth)
+
+## COLOR
+# Color should be a factor! It needs to be ordered. If this were our data, 
+# we'd know what the order should be. In this case, let's check 
+# the original diamonds to find out. 
+
+levels(messy_diamonds$color)
+
+messy_diamonds$color <- factor(messy_diamonds$color, ordered = TRUE, levels = c("D", "E", "F", "G", "H", "I", "J"))
+
+## PRICE
+# Price should be integer, but it's a factor right now.
+# If we were to call as.integer right away, it would convert 
+# them based on the factor levels! To avoid this, 
+# we'll wrap it with as.character first. 
+messy_diamonds$price <- as.integer(as.character(messy_diamonds$price))
+
+# No warnings! Let's call str to make sure things look right. 
+str(messy_diamonds)
+str(diamonds)
+
+```
+
+-----
+
+##### Exercise 2: Cleaning
+
+No peeking on the Rmd! 
+
+```{r messy_cars, include = FALSE, eval = TRUE}
+data(mtcars)
+cars <- mtcars
+
+cars[20, 3] <- "bbbb"
+cars[9, 2] <- "cc"
+cars$hp <- factor(cars$hp)
+```
+
+I've done the same thing again - messed up a perfectly good dataset and called it `cars`. This comes from the dataset `mtcars` - you can search its documentation by typing `?mtcars` into the console. Make sure the data ends up clean based on your expectations from the documentation. 
+
+```{r exercise2, include = FALSE}
+
+str(cars)
+which(is.na(as.numeric(cars$cyl)))
+cars$cyl[9] <- 4
+
+cars$cyl <- as.numeric(cars$cyl)
+which(is.na(as.numeric(cars$disp)))
+mtcars$disp[20]
+cars$disp[20] <- 71.1
+cars$disp <- as.numeric(cars$disp)
+cars$hp <- as.numeric(cars$hp)
+
+```
+
+-----
+
+Now that we've gotten things cleaned up, we're ready to go! Remember how I said that we'd come back to an easier way to get data set up in SPSS? The package **haven** is our best friend. Using `write_sav`, we can create an SPSS data file (.sav) with variable types and values set-up nicely!
+
+```{r haven}
+write_sav(diamonds, file.path(path, "diamonds.sav"))
+```
+
+Take a look at the Variable View of *diamonds.sav* in SPSS. 
+
+[![](3_variableview_haven.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+The categorical values now have numerical values corresponding to their original factor levels, and everything is appropriately classed! Take a look at the Data View for the two files to compare. 
+
+**Straight from the CSV:**
+
+[![](4_dataview_csv.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+**Through Haven:**
+
+[![](5_dataview_haven.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+This is great, because many of us don't immediately abandon our old tools when we pick up new ones. You might still want to use SPSS for some things, but R can still help you manage your data. Alternatively, it's helpful if you have collaborators who use SPSS. 
+
+#### More Tips for Setting Up Your Data
+
+The 'Missing' column in Variable View of SPSS is a helpful way to quickly identify variables with missing data. In R, you can quickly find out if there are any missing data points using `is.na` and a couple friends. 
+
+```{r missingdata}
+testvariable <- c(1, 2, 3, 5, 3, 1, 3, 3, 4, 5, 6, NA, 3, 3, 4, 7, 8, 1, 3, NA, 3, 4, 6)
+any(is.na(testvariable))
+which(is.na(testvariable))
+```
+
+You can use Values (key-value pairs) and Labels in SPSS to store information about your variables. In R, you can give your values names (similar to key-value pairs), and you can make a data dictionary to store detailed information that you want access to. **dataMeta** provides some helpful tools for making data dictionaries, but you can scrape by with base R. Here are some simple examples of ways to label data and store additional information about variables. You could of course import these by reading in a .csv (`read_csv` through **readr** is my go-to) or other spreadsheet - you don't have to type these things directly into R. 
+
+```{r labels}
+var1 <- c(1, 2, 3, 3, 4, 5, 3, 2, 1, 2)
+var2 <- c(4, 5, 3, 5, 5, 4, 2, 1, 2, 3)
+var3 <- c(1, 1, 2, 4, 5, 3, 3, 3, 2, 2)
+df <- data.frame(var1, var2, var3)
+
+# Labeling individual values
+df$var1 <- factor(var1, levels = c("1", "2", "3", "4", "5"), labels = c("Poor", "Fair", "Good", "Very Good", "Excellent"), ordered = TRUE)
+
+## All 3 of these questions have the same levels/labels so for convenience
+## we'll define vectors that store this info once
+q_labels <- c("Poor", "Fair", "Good", "Very Good", "Excellent")
+q_levels <- c("1", "2", "3", "4", "5")
+
+df$var1 <- factor(var1, levels = q_levels, labels = q_labels, ordered = TRUE)
+df$var2 <- factor(var2, levels = q_levels, labels = q_labels, ordered = TRUE)
+df$var3 <- factor(var3, levels = q_levels, labels = q_labels, ordered = TRUE)
+
+## Note: if you use an ordered factor but want to access numerical 
+## features (ie. to calculate things like mean, min or max) you can
+## wrap it in as.numeric - does not matter if factor is labeled as characters
+mean(as.numeric(df$var1))
+
+# Naming observations can be helpful to keep track
+rownames(df) <- c("PD01", "YC01", "PD02", "PD03", "PD04", "YC02", "OC01", "OC02", "YC03", "OC03")
+
+# Renaming the variables
+colnames(df) <- c("delivery", "value", "meal")
+
+# If you want to put these into their own column (helpful if tidying):
+rownames_to_column(df)
+
+# Quick and dirty data dictionary with question details and levels
+## Because the levels are consistent, I've only specified them once
+## and R will multiply it to fill the dataframe. If you have different 
+## details for each question, make sure you input them all separately. 
+## This is a good thing to do in your data entry/data prep. 
+question <- c("How was your delivery?", "Value for cost?", "How was your meal?")
+level <- c("1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5  = Excellent")
+data_dict <- data.frame(colnames(df), question, level)
+```
+
+Importing, cleaning, and wrangling your data is a huge topic, but there are tons of resources to help you with this! 
+
+## Running Tests
+
+Running statistical tests in R is a bit different from running them in SPSS, but thankfully Google is your best friend here! Let's work through a sample analysis on our `diamonds` data. 
+
+Let's say I wanted to do a t-test to compare the average prices of Ideal and Premium diamonds. 
+
+To set this up in SPSS, I would select an Indepedendent Samples t-test from the Compare Means menu. This is what my setup window would look like - I know that Ideal and Premium are coded as "4" and "5" by clicking on the Values in Data View. 
+
+[![](6_t_setup.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+And this would be my output:
+
+[![](7_t_output.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+In R, to run this t-test I'm going to use the function `t.test`. However, SPSS runs Levene's test to check for homogeneity of variance as part of the t-test. We'll have to do that ourselves, using `leveneTest` from the **car** package. We'll also need to filter in order to just have Ideal and Premium diamonds. 
+
+Seeing that Levene's test is significant, our assumption of homogeneity of variance is not upheld, and we should use a Welch t-test, rather than a Student's t-test. This is the default in R's `t.test`.
+
+```{r t-test}
+diamonds_subset <- diamonds %>% filter(cut == "Ideal" | cut == "Premium")
+
+leveneTest(diamonds_subset$price, diamonds_subset$cut, center = mean)
+
+# Welch - the one we're using
+t.test(diamonds_subset$price ~ diamonds_subset$cut, var.equal = FALSE)
+
+# Student - if Levene's hadn't been true
+t.test(diamonds_subset$price ~ diamonds_subset$cut, var.equal = TRUE)
+```
+
+The output from our t-test includes almost all of the same information as the SPSS output. All we're missing is mean difference and the standard error of the difference. Mean difference is relatively easy to calculate - standard error of the difference is a bit more complex but here it is! Once again, these funky formulas are coming from the SPSS algorithm manual. In most cases, you won't need to get a specific value that comes from the SPSS output - but this is just to provide an example of how to match things up. 
+
+```{r}
+# Mean difference - the same for Student and Welch tests 
+ideal <- filter(diamonds, diamonds$cut == "Ideal")
+premium <- filter(diamonds, diamonds$cut == "Premium")
+meandiff <- abs(mean(ideal$price) - mean(premium$price))
+
+n_ideal <- sum(!is.na(ideal$price))
+n_premium <- sum(!is.na(premium$price))
+
+# Standard error of the difference: unpooled - for Welch's t-test 
+SE_diff_unpooled <- sqrt((var(ideal$price)/n_ideal) + (var(premium$price)/n_premium))
+
+# Standard error of the difference: pooled variance - for Student's t-test
+pooled_variance <- ((n_ideal-1)*var(ideal$price) + (n_premium-1)*var(premium$price))/(n_ideal+n_premium - 2)
+SE_diff_pooled <- sqrt(pooled_variance)*sqrt(1/n_ideal+1/n_premium)
+```
+
+### Creating Summary Documents
+
+Once you've finished your beautiful work in R, you need a way to output your documents! A few ways you can do this are:
+
+* Spreadsheets: e.g. outputting to a .csv with `readr::write_csv` - *Syntax: write_csv(dataFrame, file.path(path, "results.csv"))*
+* Images: e.g. outputting a plot to a .png with `ggplot2::ggsave` - *Syntax: ggsave(plotName, file = "plot.png")*
+* R Markdown: Knitting to HTML, PDF, or Word
+
+My current favourite package for formatting summary documents in R Markdown is **flextable**, which allows you to output to HTML, PDF and Word with ease. It also offers significant customizability. If you don't use Word documents, **kableExtra** is another fabulous option, and a bit simpler!
+
+The first thing you might want to include in a summary document is some descriptives. Calculating them is easy to do using **dplyr**'s `summarize`. Here's a quick sample - there's more on this in the Explore section of the Resources. Once you've got your summary, you can use **flextable** to prep it for output. **flextable** takes a data.frame as its input.
+
+```{r summarizing}
+diamonds %>%
+  summarize(n = n(), n_missing = sum(is.na(price)), mean = mean(price), sd = sd(price), min = min(price), max = max(price)) %>%
+  mutate(stderror = sd/sqrt(n)) %>%
+  mutate(confint_lower = mean-2*stderror) %>%
+  mutate(confint_upper = mean+2*stderror)
+
+summary <- diamonds %>%
+  summarise_each(vars = c(carat, depth, table, price, x, y, z), funs(mean, sd, min, max, median, IQR)) 
+
+sum_ft <- flextable(summary)
+
+# Subset tables by stat
+flextable(select(summary, contains("mean")))
+flextable(select(summary, contains("sd")))
+
+# Subset tables by variable
+flextable(select(summary, contains("price")))
+
+# Playing with formatting
+sum_ft <- flextable(summary) %>%
+  theme_zebra %>%
+  font(part = "header", fontname = "Cambria") %>%
+  bold(part = "header") %>%
+  color(part = "header", color = "blue") %>%
+  fontsize(part = "all", size = 16)
+```
+
+Let's say we want to output our t-test output from above. Output from statistical tests is often a little cluttered - `broom::tidy` can clean that up for us.  
+
+```{r t-test output}
+output <- tidy(t.test(diamonds_subset$price ~ diamonds_subset$cut, var.equal = FALSE)) %>%
+  select(-estimate)
+
+# Very basic
+flextable(output) 
+
+# How exciting!
+out_ft <- flextable(output) %>%
+  set_header_labels(estimate1 = "Premium Mean", estimate2 = "Ideal Mean", statistic = "Statistic", p.value = "p", parameter = "df", conf.low = "Conf. Int. Lower", conf.high = "Conf. Int. High", method = "Method", alternative = "Alternative") %>%
+  bold(part = "header") %>%
+  fontsize(part = "header", size = 16) %>%
+  fontsize(part = "body", size = 14) %>%
+  bg(part = "body", bg = "#E9E9E9") 
+
+out_ft
+```
+
+Great! So we've got a couple tables we'd like to add to our R Markdown file. I think a good beginner strategy for getting easy summary documents is to work in a .Rmd (rather than a .R) and just put all your rough work in a code chunk with `include = FALSE`. That way, when you knit your document, nothing in your code chunk will be included - only things you call outside (such as with in-line code or with another chunk). Here's an example of what I mean. 
+
+**Here's what the sample below looks like in R Markdown:**
+
+[![](20_summarydoc.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+#### Summary Document Sample 
+
+```{r sample, include = FALSE}
+price_summary <- diamonds %>%
+  summarize(n = n(), n_missing = sum(is.na(price)), mean = mean(price), sd = sd(price), min = min(price), max = max(price)) %>%
+  mutate(stderror = sd/sqrt(n)) %>%
+  mutate(confint_lower = mean-2*stderror) %>%
+  mutate(confint_upper = mean+2*stderror)
+
+price_summary_ft <- flextable(price_summary) %>%
+  set_header_labels(n = "N", n_missing = "N Missing", mean = "Mean", sd = "SD", min = "Minimum", max = "Maximum", stderror = "Standard Error", confint_lower = "Conf. Int. Lower", confint_upper = "Conf. Int. Upper") %>%
+  bold(part = "header")
+
+diamonds_subset <- diamonds %>% filter(cut == "Ideal" | cut == "Premium")
+price_levene <- leveneTest(diamonds_subset$price, diamonds_subset$cut, center = mean)
+colnames(price_levene) <- c("df", "F", "p")
+price_t <- t.test(diamonds_subset$price ~ diamonds_subset$cut, var.equal = FALSE)
+price_t_out <- tidy(price_t) %>% select(-estimate)
+
+price_t_ft <- flextable(price_t_out) %>%
+  set_header_labels(estimate1 = "Premium Mean", estimate2 = "Ideal Mean", statistic = "Statistic", p.value = "p", parameter = "df", conf.low = "Conf. Int. Lower", conf.high = "Conf. Int. Upper", method = "Method", alternative = "Alternative") %>%
+  bold(part = "header")
+```
+
+The data included a sample of `r price_summary$n` diamonds. The average price among the data was `r price_summary$mean` USD. Descriptive statistics of diamond prices are below:
+
+`r price_summary_ft`
+
+I was interested in the relationship between a diamond's cut and its price at the two highest levels of cut (Ideal and Premium). I ran an independent samples t-test to compare the average price in these two groups. Testing for homogeneity of variance with Levene's test indicated a F-statistic of `r round(price_levene$F[1], 3)` and a p-value of < .001. As a result, a Welch t-test was conducted - results are below. 
+
+`r price_t_ft`
+
+-----
+
+##### Exercise 3: Summary Stats
+
+Use what you've learned to do the following:
+
+* Calculate the mean and SD of price
+* Calculate the mean and SD of price among diamonds with a cut of Ideal 
+* Turn the second one into a flextable 
+* Bold the body of the table 
+
+```{r exercise3, include = FALSE}
+
+
+```
+
+-----
+
+## Tips 
+
+* Be careful when running things in your console. Code you run from your .R or .Rmd will stay when you save/close it, but work done in the console will disappear when you close R or if your R session ever needs to restart. I usually use the console for experimentation, and then write things that work/that I'm keeping in my .R or .Rmd file. 
+* Keep your .R or .Rmd in the same place as the files you use (Also check out R Projects!). Set up your directory at the beginning of your document by assigning it to a variable: e.g. `path <- getwd()`. You can then use the function `file.path` to paste together your directory with a file you're reading (importing) or writing (exporting): e.g. `read_csv(file.path(path, "test.csv"))`. The advantage here is that `file.path` will take care of the Mac/PC/Other OS differences in slash defaults. 
+* Assign results of a statistical test to an object (e.g. `t_results <- t.test(df$var1 ~ df$var2))`) because it makes it easier access individuals elements (using the `$`) or tidy/export the output. 
+
+## Resources
+
+If you're stuck, you can reach out to me - I probably won't have an answer for you off-hand, but I'm certainly willing to look into things with you! Email: *dcushni@uwo.ca*
+
+### More Samples of R's Output vs. SPSS Output
+#### Correlation
+
+[![](8_corr_setup.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](9_corr_output.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+Bivariate correlation between carat and price:
+
+```{r correlation}
+# Base R - very simple, only gives the r value
+cor(diamonds$carat, diamonds$price)
+cor(diamonds$carat, diamonds$price, method = "spearman")
+
+# from Hmisc - also works on a matrix; includes p-values
+rcorr(diamonds$carat, diamonds$price)
+rcorr(diamonds$carat, diamonds$price, type = "spearman")
+rcorr(as.matrix(select(diamonds, -cut, -color, -clarity)))
+```
+
+#### Regression
+
+Predicting price as a function of carat:
+
+[![](10_regression_setup.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](11_regression_output.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+```{r regression}
+price_carat <- lm(diamonds$price ~ diamonds$carat)
+summary(price_carat)
+```
+
+#### ANOVA
+
+**Note:** If you want your outputted values to match SPSS, you need to use the same contrasts as SPSS. This is discussed [here](http://myowelt.blogspot.ca/2008/05/obtaining-same-anova-results-in-r-as-in.html). To change your contrasts, do the following.
+
+```{r anova contrasts}
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+One-Way ANOVA comparing mean price between all diamond cuts:
+
+[![](12_anova_setup.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](13_anova_output.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](14_anova_posthoc.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+```{r anova}
+cut_price <- lm(price ~ cut, data = diamonds)
+cut_price_aov <- aov(cut_price)
+summary(cut_price_aov)
+
+# Post-hoc with Bonferroni Correction
+pairwise.t.test(diamonds$price, diamonds$cut, p.adj = "bonferroni")
+```
+
+Two-Way ANOVA comparing mean price as a function of diamond cut and clarity:
+
+[![](15_twoway_setup.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](16_twoway_output.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](17_twoway_posthoc1.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+[![](18_twoway_posthoc2.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+```{r twoway}
+cut_clarity_price <- lm(price ~ cut*clarity, data = diamonds)
+cut_clarity_price_aov <- aov(cut_clarity_price)
+summary(cut_clarity_price_aov)
+
+# Post-hoc with Bonferroni correction
+# This print-out would be very long - showing you cut element as a sample
+cut_clarity_price_posthoc <- TukeyHSD(cut_clarity_price_aov)
+cut_clarity_price_posthoc$cut
+```
+
+#### Explore
+
+Running SPSS Explore on Price (limited screenshots because this is long output!): 
+
+* Descriptives
+
+[![](19_explore.png)](https://github.com/daryncsparrow/SPSStoR_2018/blob/master/)
+
+* Histograms
+* Boxplots
+
+**Note:** Kurtosis is calculated differently between SPSS and R. Different kurtosis calculation methods are discussed [here](https://stats.stackexchange.com/questions/61740/differences-in-kurtosis-definition-and-their-interpretation). 
+
+```{r explore_r, fig.height=10}
+# Simple investigation of price
+
+diamonds %>%
+  summarize(n = n(), n_missing = sum(is.na(price)), mean = mean(price, na.rm = TRUE), sd = sd(price, na.rm = TRUE), min = min(price, na.rm = TRUE), max = max(price, na.rm = TRUE), median = median (price, na.rm = TRUE), IQR = IQR(price, na.rm = TRUE), variance = var(price, na.rm = TRUE), trimmed = mean(price, na.rm = TRUE, trim = 0.05), skewness = skewness(price, na.rm = TRUE), kurtosis = kurtosis(price, na.rm = TRUE)) %>%
+  mutate(range = max - min) %>%
+  mutate(stderror = sd/sqrt(n)) %>%
+  mutate(confint_lower = mean-2*stderror) %>%
+  mutate(confint_upper = mean+2*stderror)
+
+hist(diamonds$price)
+boxplot(diamonds$price)
+
+# Price grouped by cut
+
+diamonds %>%
+  group_by(cut) %>%
+  summarize(n = n(), n_missing = sum(is.na(price)), mean = mean(price, na.rm = TRUE), sd = sd(price, na.rm = TRUE), min = min(price, na.rm = TRUE), max = max(price, na.rm = TRUE), median = median (price, na.rm = TRUE), IQR = IQR(price, na.rm = TRUE), variance = var(price, na.rm = TRUE), trimmed = mean(price, na.rm = TRUE, trim = 0.05), skewness = skewness(diamonds$price, na.rm = TRUE), kurtosis = kurtosis(diamonds$price, na.rm = TRUE)) %>%
+  mutate(range = max - min) %>%
+  mutate(stderror = sd/sqrt(n)) %>%
+  mutate(confint_lower = mean-2*stderror) %>%
+  mutate(confint_upper = mean+2*stderror)
+
+ggplot(diamonds, aes(x = price)) + 
+  geom_histogram(color = "black", fill = "white") +
+  facet_grid(cut ~.)
+
+ggplot(diamonds, aes(x = cut, y = price)) + 
+  geom_boxplot(color = "black", fill = "white")
+
+```
+
+### Questionnaires?
+
+Working with questionnaire data offers unique challenges. For those of you who are into that, here are some quick tips on how to manage this kind of data. 
+
+We're going to use the `bfi` dataset - documentation can tell you lots about it! The `bfi` documentation actually includes a sample of how to use an item key and score negatively keyed items - so this section is us working through the provided sample. In SPSS, you would negatively key items using Transform. 
+
+Briefly, `bfi` is a set of 25 personality self-report items from 2800 subjects, plus demogrpahics on gender, education, and age. The 25 items are oranized around 5 factors: (A) Agreeableness, (C) Conscientiousness, (E) Extraversion, (N) Neuroticism, (O) Openness. As is common with questionnaire data, some of these items are negatively keyed (ie. high scores on the question represent low levels of the dimension measured). This is easy to do in R! To make a keys.list, define vectors for each factor (ie. Agreeableness) and list the included questions by name. Negatively keyed variables are prefaced with a -. 
+
+```{r bfi}
+data(bfi)
+glimpse(bfi)
+
+keys.list <- list(agree=c("-A1","A2","A3","A4","A5"),conscientious=c("C1","C2","C3","-C4","-C5"),
+extraversion=c("-E1","-E2","E3","E4","E5"),neuroticism=c("N1","N2","N3","N4","N5"),
+openness = c("O1","-O2","O3","O4","-O5")) 
+
+# scoreItems gives a ton of info about items! 
+scores <- scoreItems(keys.list,bfi,min=1,max=6) # Need to specify the minimum and maximum values
+scores
+
+# Call str() on scores to see all the pieces of information you can access
+# individually! The *scores* element of scores includes the re-keyed items 
+# Summarise from dplyr can help you investigate these scores.  
+keyed_scores <- data.frame(scores$scores)
+
+keyed_scores %>%
+  summarise_all(mean)
+
+# If you wanted to group by a variable (such as gender) - remember that 
+# we dropped demographics when we used keys.list. We can get those back!
+# According to the documentation, males = 1 and females =2
+keyed_scores <- cbind(gender = bfi$gender, keyed_scores)
+
+keyed_scores %>%
+  group_by(gender) %>%
+  summarise_all(mean)
+
+# Using dplyr::select to help you subset to look at individual pieces of the data
+open <- bfi %>%
+  select(starts_with("O"))
+```
+
+Dummy coding is useful and not exclusive to questionnaire data. This is very simple in R. Let's say we wanted to look at the relationship between education and openness. 
+
+```{r dummycoding}
+# Factor the variable first mostly to re-label nicely
+factored_edu <- factor(bfi$education, labels = c("someHS", "doneHS", "someCollege", "doneCollege", "graduate"), ordered = TRUE, exclude = NA)
+
+edu <- dummy.code(factored_edu)
+
+# Your dummy coded variables are now an island!
+# Bind these dummy coded education variables to the openness df
+# we made earlier with dplyr::select. 
+open_edu <- cbind(edu, open)
+```
+
+### Links
+
+#### Basics, Importing, Wrangling
+
+* https://datacarpentry.org/R-genomics/index.html
+* https://www.statmethods.net/input/importingdata.html
+* https://www.datacamp.com/community/tutorials/r-data-import-tutorial
+* https://rpubs.com/williamsurles/292547
+* http://stcorp.nl/R_course/tutorial_dplyr.html
+
+#### Questionnaires/Surveys 
+
+* https://mvuorre.github.io/toolbox/questionnaire.html
+
+#### Stats
+
+* http://www.milanor.net/blog/aggregation-dplyr-summarise-summarise_each/ 
+* http://www.r-tutor.com/elementary-statistics
+* http://tutorials.iq.harvard.edu/R/Rstatistics/Rstatistics.html 
+* http://r-statistics.co/Assumptions-of-Linear-Regression.html
+* http://www.statmethods.net/stats/anova.html
+* http://myowelt.blogspot.ca/2008/05/obtaining-same-anova-results-in-r-as-in.html
+* http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
+* https://www.r-bloggers.com/example-2014-6-comparing-medians-and-the-wilcoxon-rank-sum-test/
+* http://gribblelab.org/stats/index.html
+* ftp://public.dhe.ibm.com/software/analytics/spss/documentation/statistics/24.0/en/client/Manuals/IBM_SPSS_Statistics_Algorithms.pdf
+
+#### Summary Documents 
+
+* https://bookdown.org/yihui/rmarkdown/
+* https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf
+* https://davidgohel.github.io/flextable/articles/overview.html
+* https://cran.r-project.org/web/packages/flextable/vignettes/format.html
+* https://cran.r-project.org/web/packages/flextable/flextable.pdf
+* https://cran.r-project.org/web/packages/captioner/vignettes/using_captioner.html
+* https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html
+
+Thanks for reading/listening!
