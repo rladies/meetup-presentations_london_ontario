@@ -1,0 +1,200 @@
+---
+title: "BIKE PARKING DOWNTOWN LONDON, ON"
+output: html_document
+---
+March 28, 2019
+For R-Ladies London, ON 
+
+By Rebecca Henderson, PhD candidate, Faculty of Health Sciences, Western University
+
+I want to thank the Cycling Advisory Committee and intern students at Thames Regional Ecological Authority for providing the parking data for this project today. 
+
+We need to install the development version of ggmaps, and you need to get a google API for Maps Static API. You can read about that [here](https://github.com/dkahle/ggmap#user-content-attention). You will need to set up a a 12-month free trial with google, but you have to give billing information. If you haven't already set that up and gotten an API key, get one  [here](https://developers.google.com/maps/documentation/maps-static/intro#auth) by click on the blue "Get Started" button, then check off "Maps".
+
+I started off with this tutorial for heatmaps
+https://www.sharpsightlabs.com/blog/how-to-create-a-crime-heatmap-in-r/
+
+```{r}
+# if(!requireNamespace("devtools")) install.packages("devtools")
+# devtools::install_github("dkahle/ggmap", ref = "tidyup")
+```
+
+
+```{r}
+library(tidyverse)
+library(ggmap)
+library(stringr)
+library(viridis)
+library(ggplot2)
+```
+
+Change "YOUR-API-KEY-HERE" to your API key in quotes. Don't share this number with anyone, it's like a password.
+```{r}
+register_google("YOUR-API-KEY-HERE")
+```
+
+It's great to be able to import your data directly from excel!
+
+```{r}
+BikeParking <- read_csv("BikeParking_Feb16.csv")
+colnames(BikeParking)[1:2] <- c("Latitude","Longitude")
+```
+# SIMPLE SCATTERPLOT
+Just a scatterplot of Latitude on the y axis and Longitude on the x. Points have 70% opacity.
+In this [tutorial](https://www.sharpsightlabs.com/blog/how-to-create-a-crime-heatmap-in-r/). In their tutorial, they used `x = lat` and `y = long` because lat and long were their column names. All we have to do is replace lat and long with our column names, Latitude and Longitude:
+
+```{r}
+ggplot() +
+  geom_point(data = BikeParking, aes(x = Longitude, y = Latitude), alpha = .07)
+```
+
+# SIMPLE HEATMAP
+Divides the plane into rectangles, counts the number of cases in each rectangle, and then (by default) maps the number of cases to the rectangle's fill.
+```{r}
+ggplot() +
+  stat_bin_2d(data = BikeParking, aes(x = Longitude, y = Latitude, fill = ..count..), geom = 'tile') 
+```
+
+# GET MAP
+```{r}
+# map_london <- get_map(
+#   location = c(Longitude=mean(BikeParking$Longitude), Latitude=mean(BikeParking$Latitude)),
+#   zoom=15,
+#   maptype = 'roadmap')
+#saveRDS(map_london,"map_london.rds")
+
+map_london <- readRDS("map_london.rds")
+```
+
+# PLOT BASIC LONDON MAP
+Check if the zoom is okay. If not, change the `zoom=15` argument in the chunk of code above. Note: The maptype options available are "terrain", "satellite", "roadmap", and "hybrid". zoom=3 is continent. zoom=20 is approx a city block. I like this cheatsheet: https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/ggmap/ggmapCheatsheet.pdf
+
+
+```{r}
+ggmap(map_london)
+```
+
+# LABELS
+
+```{r}
+ggmap(map_london) +
+  geom_point(data = BikeParking, 
+             aes(x = Longitude, y = Latitude), 
+             alpha = .7, color="red") +
+  geom_text(data = BikeParking, 
+            aes(x = Longitude, y = Latitude, label=paste0(Road1,"_",Road2)), 
+            size=3.5, color="red", alpha=0.6, fontface = "bold", show.legend = FALSE)
+
+
+```
+
+# Organizing data
+
+```{r}
+# # to make longitude and latitude the same for each location. Bike parking at Piccadilly St. and Richmond St. is the same as Richmond St. and Piccadilly St, but R doesn't know that. :) 
+## group data by road1 and road2, take the average lat and long for each group 
+# BikeParking2 <- BikeParking %>%
+#   rowwise() %>% 
+#   mutate(R1 = sort(c(Road1, Road2))[1], R2 = sort(c(Road1, Road2))[2]) %>% 
+#   ungroup() %>%
+#   select(-Road1,-Road2)
+# 
+# 
+# # count the number of bike parking per group.
+# BikeParking_summary <- BikeParking2 %>%
+#   group_by(R1, R2) %>% 
+#   summarise(N=n(), Latitude = mean(Latitude), Longitude=mean(Longitude))
+# 
+# # Merge back to the data and replace the old longitude and latitude
+# BikeParking2 <- BikeParking2 %>% 
+#   select(-Latitude,-Longitude) %>% 
+#   left_join(BikeParking_summary,c("R1","R2")) 
+
+```
+
+# HEATMAP OVERLAY
+
+```{r}
+# MAP WITH HEATMAP OVERLAY
+ggmap(map_london) +
+  stat_bin_2d(data = BikeParking, aes(x = Longitude, y = Latitude, fill = stat(count)),
+             # binwidth = c(0.001, 0.001),
+              geom = 'tile',  alpha=.5) +
+  scale_fill_viridis()
+```
+
+# POLISHED HEATMAP
+
+```{r}
+final_map <- ggmap(map_london) +
+  stat_bin_2d(data = BikeParking, aes(x = Longitude, y = Latitude, fill = stat(count)), 
+              binwidth = c(0.001, 0.001),
+              geom = 'tile',  alpha=.5) +
+  scale_fill_viridis(option = 'cividis') +
+  labs(title = str_c('Bike parking\n', #<-- the \n adds a line break
+                     'downtown London'
+                     ),
+       subtitle = 'Just for learning purposes',
+       fill = str_c('Number of', '\nbikeparking')
+       ) +
+  theme(text = element_text(color = "#444444"),
+        plot.title = element_text(size = 22, face = 'bold'),
+        plot.subtitle = element_text(size = 12),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank()
+        ) +
+  guides(fill = guide_legend(override.aes= list(alpha = 1)))
+```
+
+
+Preview your final map: (this could take some time)
+```{r}
+final_map
+```
+
+Save your final map as a png. You can change the width and height of the final image here as well:
+```{r}
+ggsave(filename = "bike_parking_heatmap.png", units="cm", width=20, height=20)
+```
+
+# POLISHED POINTMAP
+For bike parking, we want to know the exact location of a bike rack, so this is a silly example. (We also don't have a large enough data set.) However, point maps are very useful to cluster incidences of crime, income levels by neighbourhood, electoral voting patterns, etc.
+
+```{r}
+# group data by road1 and road2, take the average lat and long for each group 
+# count the number of bike parking per group.
+BikeParking_summary <- BikeParking %>%
+  rowwise() %>% 
+  mutate(R1 = sort(c(Road1, Road2))[1], R2 = sort(c(Road1, Road2))[2]) %>% 
+  ungroup() %>%
+  select(-Road1,-Road2) %>%
+  group_by(R1, R2) %>% 
+  summarise(N=n(), Latitude = mean(Latitude), Longitude=mean(Longitude))
+
+# use the number of collisions per group to determine point size
+ggmap(map_london) +
+  geom_point(data = BikeParking_summary, 
+             aes(x = Longitude, y = Latitude, size=N), 
+             alpha = .7, color="red") + 
+  geom_text(data = BikeParking_summary, 
+            aes(x = Longitude, y = Latitude, label=N), 
+            size=2, color="white",  fontface = "bold", show.legend = FALSE)+
+      labs(title = str_c('Bike Parking\n', #<-- the \n adds a line break
+                     'downtown London'
+                     ),
+       subtitle = 'Just for learning purposes',
+       size = str_c('Number of', '\nparking spots')
+       ) +
+  theme(text = element_text(color = "#444444"),
+        plot.title = element_text(size = 22, face = 'bold'),
+        plot.subtitle = element_text(size = 12),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank()
+        )+ 
+    scale_size_continuous(range = c(2,10))
+
+ggsave(filename = "bike_parking_pointmap.png", units="cm", width=20, height=20)
+```
+
