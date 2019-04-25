@@ -1,0 +1,40 @@
+---
+bibliography: references.bib
+output:
+  bookdown::word_document2:
+    fig_caption: TRUE
+    md_extensions: +footnotes
+    reference_docx: ../uwo_thesis_template.docx
+always_allow_html: yes
+biblio-style: apalike
+---
+
+```{r setup-index, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache=TRUE, fig.width=6, fig.asp=1)
+options(digits = 3)
+options(scipen = 999 )
+```
+
+# Draft of methods & results
+
+```{r part1, child = '../02_Methods.Rmd'}
+```
+
+<!-- Experiment 1 -->
+*Placeholder for experiment 1*
+
+<!-- ```{r part2, child = '../03a_Results.Rmd'} -->
+<!-- ``` -->
+
+<!-- Experiment 2 -->
+
+```{r part2, child = '../03b_Results.Rmd'}
+```
+
+<!-- Experiment 3 -->
+*Placeholder for experiment 3*
+
+# Selected references
+
+
+

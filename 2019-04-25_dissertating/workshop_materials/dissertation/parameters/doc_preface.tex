@@ -1,0 +1,154 @@
+
+%% This sets the page style and numbering for preliminary sections.
+\begin{preliminary}
+
+%% This generates the title page from the information given in preamble.tex.
+\maketitle
+%\addcontentsline{toc}{chapter}{Certificate of Examination}
+%\makecert
+\newpage
+
+
+%\addcontentsline{toc}{chapter}{Co-Authorship Statement}
+%\coauthor{\makecoauthor}  %comment this out if none
+%\newpage
+%\addcontentsline{toc}{chapter}{Acknowlegements}
+%\acknowlege{\makeacknowlege}	%as above
+\setcounter{page}{2}
+\addcontentsline{toc}{chapter}{Abstract}
+\Large\begin{center}\textbf{Abstract}\end{center}\normalsize
+%%  ***  Put your Abstract here.   ***
+%% (150 words for M.Sc. and 350 words for Ph.D.)
+%\input{abstract}
+
+Here's a story 
+about a little guy that lives in a blue world. 
+And all day and all night and everything he sees is just blue, 
+like him inside and outside. 
+Blue his house with a blue little window 
+and a blue corvette 
+and everything is blue for him 
+and himself and everybody around 
+'cause he ain't got nobody to listen.
+
+\vfill
+\noindent\textbf{Keywords:} keyword 1, keyword 2, keyword 3.
+\newpage
+
+
+
+
+\clearpage
+
+\thispagestyle{empty}
+\null\vfill
+{
+	\settowidth\longest{\Large\itshape Planning to write is not writing. Outlining, researching,}
+	\centering
+	\hspace{3cm}\parbox{\longest}{%
+		\raggedright{\Large\itshape%
+      Planning to write is not writing. Outlining, researching, talking to people about what you're doing, none of that is writing. Writing is writing.\par\bigskip
+		}   
+		\raggedleft\MakeUppercase{E. L. Doctorow}\par%
+		\raggedleft\MakeUppercase{\textit{Some book}}\par%
+}}
+
+\vfill\vfill
+
+\newpage
+
+
+\addcontentsline{toc}{chapter}{Acknowledgments}
+\Large\begin{center}\textbf{Acknowledgments}\end{center}\normalsize
+%\input{acknowledgements}
+I'd like to acknowledge my dog, Rocky, whose enthusiasm for cheese is unrivaled. If this dissertation is even half as good as Rocky thinks cheese is, I will deem this body of work a massive success.
+
+\vfill
+\newpage
+\singlespacing
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% Table of contents %%%%%%%%%%%%%%%%%
+% Source: UWO thesis template
+\tableofcontents\newpage
+\newpage
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+\newpage
+\addcontentsline{toc}{chapter}{List of Algorithms}
+\listofalgorithms
+\addtocontents{loa}{\def\string\figurename{Algorithm}}
+\newpage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+\newpage
+\addcontentsline{toc}{chapter}{List of Appendices}
+\listofmyappendices\newpage
+
+\addcontentsline{toc}{chapter}{List of Abbreviations, Symbols, and Nomenclature}
+\Large \textbf{List of Abbreviations, Symbols, and Nomenclature} \normalsize
+
+You can define nomenclature from the text by using printnomenclature:
+\printnomenclature
+
+You can also manually specify them:
+
+\begin{tabular}{lcl}
+\\
+\multicolumn{3}{l}{\textbf{Terminology}}\\
+CNR & & Contrast-to-noise ratio \\
+SNR & \, & Signal-to-noise ratio \\
+\\
+\multicolumn{3}{l}{\textbf{Terms Introduced by this Thesis}}\\
+$\mathbb{ABC}$ && ABC \\
+DEF & \, & DEF \\
+\end{tabular}
+
+\newpage
+
+\clearpage
+
+\addcontentsline{toc}{chapter}{Preface}
+\Large\begin{center}\textbf{Preface}\end{center}\normalsize
+\onehalfspacing
+%\input{preface}
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% Table of contents %%%%%%%%%%%%%%%%%
+% Source: LDM's dissertation toolkit
+% 
+% \begin{singlespace}
+% \tableofcontents
+% \end{singlespace}
+% 
+% \clearpage
+% \addcontentsline{toc}{chapter}{\listtablename}
+% \listoftables
+% 
+% \clearpage
+% \addcontentsline{toc}{chapter}{\listfigurename}
+% \listoffigures
+% 
+% \clearpage
+% \addcontentsline{toc}{chapter}{\nomname}
+% \printnomenclature
+% 
+% \clearpage
+% \normalsize
+% \pagenumbering{arabic}
+% \setcounter{page}{1}
+
+\end{preliminary}
+%% End of the preliminary sections
+
+
+
+
+
+
+
+
